@@ -30,11 +30,15 @@ token-driven theming system and one-command deploys to **GitHub Pages** _and_ **
 ## Features
 
 - **Token-driven theme system.** Every color and radius is a CSS variable mapped into Tailwind's
-  `@theme`. Light / dark / system modes, six accent presets, a custom color picker, and an
-  adjustable corner radius — all editable live from the **Settings** page and persisted to
-  LocalStorage. See [`src/styles/globals.css`](src/styles/globals.css),
-  [`src/store/theme.ts`](src/store/theme.ts) and
-  [`src/components/theme-provider.tsx`](src/components/theme-provider.tsx).
+  `@theme`, using a cohesive brand palette (primary `#005396`, blue-light `#00a0dc`, teal `#11b9b4`,
+  coral `#f89e64`) and the **Montserrat** typeface (self-hosted via `@fontsource`). **Light and
+  dark** themes — defaulting to the system preference — plus a clickable **accent picker** and an
+  adjustable corner radius, editable from the **Settings** page and persisted to LocalStorage. See
+  [`src/styles/globals.css`](src/styles/globals.css), [`src/store/theme.ts`](src/store/theme.ts)
+  and [`src/components/theme-provider.tsx`](src/components/theme-provider.tsx).
+- **Premium theme-switch animation.** Toggling light/dark plays a full-page **circular reveal** from
+  the click point (View Transitions API) while the old theme cross-dissolves, with a reduced-motion
+  fallback. See [`src/lib/theme-transition.ts`](src/lib/theme-transition.ts).
 - **Data-viz dashboard** reading a local mock JSON file ([`src/data/metrics.json`](src/data/metrics.json)).
 - **3D showcase** rendered procedurally in-browser (no external asset CDN).
 - **Per-route code splitting** so the heavy 3D bundle only loads on `/showcase`.

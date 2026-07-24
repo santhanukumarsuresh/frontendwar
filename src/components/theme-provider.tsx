@@ -1,46 +1,38 @@
 import { useEffect } from 'react'
-import { ACCENT_PRESETS, resolveMode, useThemeStore } from '@/store/theme'
+import { useThemeStore } from '@/store/theme'
 
 /**
  * Applies the theme store to the DOM:
- *   - sets `data-theme` on <html> (light | dark) so CSS token blocks switch
- *   - overrides the --primary and --ring tokens from the chosen accent
+ *   - sets `data-theme` (light | dark) on <html> so the CSS token blocks switch
+ *   - overrides --primary / --ring when a custom accent is chosen (else the
+ *     theme's built-in primary is used)
  *   - overrides the --radius token
  *
- * Because every Tailwind color/radius utility is mapped to these CSS
- * variables (see globals.css), changing them here restyles the whole app
- * instantly — no re-render or class swapping required.
+ * Because every Tailwind color/radius utility maps to these CSS variables
+ * (see globals.css), changing them here restyles the whole app instantly.
+ * The animated switch itself is handled in src/lib/theme-transition.ts.
  */
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const mode = useThemeStore((s) => s.mode)
   const accent = useThemeStore((s) => s.accent)
-  const customAccent = useThemeStore((s) => s.customAccent)
   const radius = useThemeStore((s) => s.radius)
 
-  // Apply light/dark + react to OS changes when in `system` mode.
   useEffect(() => {
-    const root = document.documentElement
-    const apply = () => {
-      root.dataset.theme = resolveMode(mode)
-    }
-    apply()
-
-    if (mode === 'system') {
-      const mq = window.matchMedia('(prefers-color-scheme: dark)')
-      mq.addEventListener('change', apply)
-      return () => mq.removeEventListener('change', apply)
-    }
+    document.documentElement.dataset.theme = mode
   }, [mode])
 
-  // Apply accent color to the --primary + --ring tokens.
   useEffect(() => {
     const root = document.documentElement
-    const color = customAccent ?? ACCENT_PRESETS[accent]
-    root.style.setProperty('--primary', color)
-    root.style.setProperty('--ring', color)
-  }, [accent, customAccent])
+    if (accent) {
+      root.style.setProperty('--primary', accent)
+      root.style.setProperty('--ring', accent)
+    } else {
+      // Fall back to the per-theme primary declared in globals.css.
+      root.style.removeProperty('--primary')
+      root.style.removeProperty('--ring')
+    }
+  }, [accent])
 
-  // Apply corner radius.
   useEffect(() => {
     document.documentElement.style.setProperty('--radius', `${radius}rem`)
   }, [radius])

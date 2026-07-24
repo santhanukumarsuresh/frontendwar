@@ -30,8 +30,8 @@ export default defineConfig({
         short_name: 'FW 2026',
         description:
           'A fully client-side React + TypeScript + Vite + Tailwind app for Frontend Wars 2026.',
-        theme_color: '#7c3aed',
-        background_color: '#0b0b12',
+        theme_color: '#005396',
+        background_color: '#0d1b2a',
         display: 'standalone',
         orientation: 'portrait',
         categories: ['productivity', 'developer'],

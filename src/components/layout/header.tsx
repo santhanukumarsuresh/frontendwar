@@ -12,7 +12,7 @@ const NAV = [
 export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <Link to="/" className="flex items-center gap-2 font-semibold">
           <span className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground">
             <Swords className="size-4" />

@@ -1,65 +1,70 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-export type ThemeMode = 'light' | 'dark' | 'system'
+export type ThemeMode = 'light' | 'dark'
 
-/** Named accent presets (values are oklch strings applied to the --primary token). */
-export const ACCENT_PRESETS = {
-  violet: 'oklch(0.55 0.24 285)',
-  blue: 'oklch(0.55 0.2 255)',
-  emerald: 'oklch(0.6 0.16 160)',
-  amber: 'oklch(0.72 0.17 65)',
-  rose: 'oklch(0.62 0.24 15)',
-  cyan: 'oklch(0.62 0.13 210)',
-} as const
+/** Selectable accent swatches (applied to the --primary / --ring tokens). */
+export const ACCENT_SWATCHES = [
+  { name: 'Ocean', value: '#005396' },
+  { name: 'Sky', value: '#00a0dc' },
+  { name: 'Teal', value: '#11b9b4' },
+  { name: 'Coral', value: '#f89e64' },
+  { name: 'Violet', value: '#6d5cff' },
+  { name: 'Emerald', value: '#16a34a' },
+  { name: 'Rose', value: '#e11d48' },
+] as const
 
-export type AccentPreset = keyof typeof ACCENT_PRESETS
+/** The OS-level color preference, used as the default before the user chooses. */
+export function getSystemMode(): ThemeMode {
+  if (typeof window === 'undefined') return 'light'
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+}
 
 export interface ThemeState {
-  /** light | dark | system (follows OS preference) */
+  /** light | dark — defaults to the system preference on first visit */
   mode: ThemeMode
-  /** selected accent preset name */
-  accent: AccentPreset
-  /** optional custom accent that overrides the preset (any valid CSS color) */
-  customAccent: string | null
+  /** custom accent color, or null to use the theme's built-in primary */
+  accent: string | null
   /** base corner radius in rem */
   radius: number
 
   setMode: (mode: ThemeMode) => void
-  setAccent: (accent: AccentPreset) => void
-  setCustomAccent: (color: string | null) => void
+  toggleMode: () => void
+  setAccent: (accent: string | null) => void
   setRadius: (radius: number) => void
   reset: () => void
 }
 
-const DEFAULTS = {
-  mode: 'system' as ThemeMode,
-  accent: 'violet' as AccentPreset,
-  customAccent: null as string | null,
-  radius: 0.625,
-}
+const DEFAULT_RADIUS = 0.5
 
 export const useThemeStore = create<ThemeState>()(
   persist(
-    (set) => ({
-      ...DEFAULTS,
+    (set, get) => ({
+      mode: getSystemMode(),
+      accent: null,
+      radius: DEFAULT_RADIUS,
       setMode: (mode) => set({ mode }),
-      setAccent: (accent) => set({ accent, customAccent: null }),
-      setCustomAccent: (customAccent) => set({ customAccent }),
+      toggleMode: () => set({ mode: get().mode === 'dark' ? 'light' : 'dark' }),
+      setAccent: (accent) => set({ accent }),
       setRadius: (radius) => set({ radius }),
-      reset: () => set({ ...DEFAULTS }),
+      reset: () => set({ mode: getSystemMode(), accent: null, radius: DEFAULT_RADIUS }),
     }),
     {
       name: 'fw-theme', // localStorage key — must match the bootstrap script in index.html
-      version: 1,
+      version: 3,
+      // Coerce any older persisted shape into the current one (older builds had
+      // a 'system' mode and accent presets). Prevents the "couldn't be migrated"
+      // console error and preserves the user's mode/radius across upgrades.
+      migrate: (persisted) => {
+        const p = (persisted ?? {}) as Partial<ThemeState>
+        const accent =
+          typeof p.accent === 'string' && /^#[0-9a-fA-F]{6}$/.test(p.accent) ? p.accent : null
+        return {
+          mode: p.mode === 'light' || p.mode === 'dark' ? p.mode : getSystemMode(),
+          accent,
+          radius: typeof p.radius === 'number' ? p.radius : DEFAULT_RADIUS,
+        } as ThemeState
+      },
     },
   ),
 )
-
-/** Resolve `system` mode to a concrete light/dark value. */
-export function resolveMode(mode: ThemeMode): 'light' | 'dark' {
-  if (mode === 'system') {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-  }
-  return mode
-}
