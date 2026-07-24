@@ -1,0 +1,36 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build output
+dist
+dist-ssr
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.local
+
+# Env
+.env
+.env.*
+!.env.example
+
+# TanStack Router generated file is committed on purpose (see README),
+# but ignore the temp cache
+.tanstack
+
+# Vercel
+.vercel
+
+# Build walkthrough — notes,
+/PROJECT_WALKTHROUGH.md

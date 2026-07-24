@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Update the origin to your live deployment URL after deploying.
+Sitemap: https://example.com/sitemap.xml
