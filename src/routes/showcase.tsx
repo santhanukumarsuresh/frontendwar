@@ -47,7 +47,7 @@ function ShowcasePage() {
       </div>
 
       <Card className="overflow-hidden p-0">
-        <CardContent className="h-[28rem] p-0">
+        <CardContent className="h-112 p-0">
           <Canvas shadows camera={{ position: [0, 0, 5], fov: 45 }} dpr={[1, 2]}>
             <color attach="background" args={['#0b0b12']} />
             <ambientLight intensity={0.5} />

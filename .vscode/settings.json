@@ -1,0 +1,17 @@
+{
+  // Run ESLint's autofix on save — this applies the Tailwind canonical-class
+  // rule (and any other fixable rule) to each file as you save it.
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+
+  // Tailwind CSS IntelliSense: surface non-canonical class hints in the editor
+  // (the "suggestCanonicalClasses" nudge). Values: "error" | "warning" | "ignore".
+  "tailwindCSS.lint.suggestCanonicalClasses": "warning",
+
+  // Tailwind v4 is configured in CSS, so point IntelliSense at the entry file.
+  "tailwindCSS.experimental.configFile": "src/styles/globals.css",
+
+  // Recognize class strings inside cn()/cva()/clsx() etc.
+  "tailwindCSS.classFunctions": ["cn", "clsx", "classNames", "twMerge", "cva"]
+}

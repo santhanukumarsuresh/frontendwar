@@ -51,6 +51,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@tailwindcss/node": "^4.3.3",
     "@tailwindcss/vite": "^4.3.3",
     "@tanstack/router-plugin": "^1.168.23",
     "@types/d3": "^7.4.3",
@@ -62,6 +63,7 @@
     "eslint": "^10.7.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.3",
+    "eslint-plugin-tailwind-canonical-classes": "^1.4.1",
     "globals": "^17.7.0",
     "prettier": "^3.9.6",
     "prettier-plugin-tailwindcss": "^0.8.1",
