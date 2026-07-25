@@ -76,17 +76,17 @@ function LoginPage() {
   }
 
   return (
-    // Negative margin trims the page's default padding so the form fits a
+    // Negative margin cancels the page's default padding so the form fits a
     // typical laptop viewport without scrolling.
-    <div className="mx-auto -my-4 grid min-h-[calc(100dvh-13rem)] max-w-5xl items-center gap-10 lg:grid-cols-2">
+    <div className="mx-auto -my-8 grid min-h-[calc(100dvh-7.5rem)] max-w-5xl items-center gap-10 lg:grid-cols-2">
       {/* Pitch */}
       <motion.div
         initial={{ opacity: 0, x: -14 }}
         animate={{ opacity: 1, x: 0 }}
         className="hidden flex-col gap-6 lg:flex"
       >
-        <Logo className="size-12" />
-        <h1 className="text-balance text-4xl font-bold tracking-tight">
+        <Logo className="size-11" />
+        <h1 className="text-balance text-3xl font-bold tracking-tight xl:text-4xl">
           A few details, and your{' '}
           <span className="bg-(image:--brand-gradient) bg-clip-text text-transparent">
             financial blueprint
@@ -113,7 +113,7 @@ function LoginPage() {
 
       {/* Form — kept compact so the page fits without scrolling */}
       <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}>
-        <Card className="mx-auto w-full max-w-md shadow-lg">
+        <Card className="mx-auto w-full max-w-md py-0 shadow-lg">
           <CardContent className="flex flex-col gap-2.5 p-4 sm:p-5">
             <div className="flex items-center gap-3 lg:hidden">
               <Logo className="size-8" />
@@ -128,19 +128,26 @@ function LoginPage() {
               </p>
             </div>
 
-            <form className="flex flex-col gap-2.5" onSubmit={onSubmit}>
+            <form className="flex flex-col gap-2" onSubmit={onSubmit}>
               <div className="grid gap-2.5 sm:grid-cols-2">
                 <div className="flex flex-col gap-1">
                   <Label htmlFor="su-name" className="text-xs">
                     Full name
                   </Label>
-                  <Input id="su-name" required placeholder="e.g. Rani Sharma" {...field('name')} />
+                  <Input
+                    className="h-8"
+                    id="su-name"
+                    required
+                    placeholder="e.g. Rani Sharma"
+                    {...field('name')}
+                  />
                 </div>
                 <div className="flex flex-col gap-1">
                   <Label htmlFor="su-email" className="text-xs">
                     Email
                   </Label>
                   <Input
+                    className="h-8"
                     id="su-email"
                     type="email"
                     required
@@ -154,6 +161,7 @@ function LoginPage() {
                   Password
                 </Label>
                 <Input
+                  className="h-8"
                   id="su-password"
                   type="password"
                   required
@@ -166,19 +174,32 @@ function LoginPage() {
                   <Label htmlFor="su-age" className="text-xs">
                     Age
                   </Label>
-                  <Input id="su-age" type="number" min={16} placeholder="32" {...field('age')} />
+                  <Input
+                    className="h-8"
+                    id="su-age"
+                    type="number"
+                    min={16}
+                    placeholder="32"
+                    {...field('age')}
+                  />
                 </div>
                 <div className="flex flex-col gap-1">
                   <Label htmlFor="su-occupation" className="text-xs">
                     Occupation, city
                   </Label>
-                  <Input id="su-occupation" placeholder="PM, Bengaluru" {...field('occupation')} />
+                  <Input
+                    className="h-8"
+                    id="su-occupation"
+                    placeholder="PM, Bengaluru"
+                    {...field('occupation')}
+                  />
                 </div>
                 <div className="flex flex-col gap-1">
                   <Label htmlFor="su-income" className="text-xs">
                     Monthly income (₹)
                   </Label>
                   <Input
+                    className="h-8"
                     id="su-income"
                     type="number"
                     min={0}
@@ -191,6 +212,7 @@ function LoginPage() {
                     Monthly expenses (₹)
                   </Label>
                   <Input
+                    className="h-8"
                     id="su-expenses"
                     type="number"
                     min={0}
@@ -203,8 +225,8 @@ function LoginPage() {
               <Button type="submit" className="mt-0.5">
                 Start my blueprint
               </Button>
-              <p className="flex items-center justify-center gap-1.5 text-center text-xs text-muted-foreground">
-                <LockKeyhole className="size-3.5 shrink-0" />
+              <p className="flex items-center justify-center gap-1.5 text-center text-[11px] text-muted-foreground">
+                <LockKeyhole className="size-3 shrink-0" />
                 No backend, no tracking — your details never leave this browser.
               </p>
             </form>

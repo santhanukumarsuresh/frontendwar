@@ -14,6 +14,7 @@ const EDGE_STYLES: Record<EdgeRelation, { stroke: string; dash?: string; flow?: 
   owes: { stroke: '#f59e0b' },
   plans: { stroke: 'var(--muted-foreground)' },
   shields: { stroke: '#10b981', dash: '2 4' },
+  owns: { stroke: 'var(--muted-foreground)', dash: '3 4' },
 }
 
 interface SimNode extends d3.SimulationNodeDatum {
@@ -68,6 +69,7 @@ const LINK_DISTANCE: Record<EdgeRelation, number> = {
   protects: 150,
   owes: 145,
   shields: 125,
+  owns: 170,
 }
 
 /**
@@ -94,6 +96,23 @@ function buildSimulation(visible: FinNode[]) {
   const simLinks: SimLink[] = EDGES.filter((e) => ids.has(e.source) && ids.has(e.target)).map(
     (e) => ({ source: e.source, target: e.target, relation: e.relation }),
   )
+
+  // An item can lose all its edges when its counterpart is removed or
+  // filtered out (stocks funding a deleted home goal, motor cover on a
+  // deleted car loan). It still belongs to the user, so tie it back to
+  // the centre instead of letting it float.
+  if (ids.has('you')) {
+    const linked = new Set<string>()
+    for (const l of simLinks) {
+      linked.add(l.source as string)
+      linked.add(l.target as string)
+    }
+    for (const node of visible) {
+      if (node.id !== 'you' && !linked.has(node.id)) {
+        simLinks.push({ source: node.id, target: 'you', relation: 'owns' })
+      }
+    }
+  }
 
   const sim = d3
     .forceSimulation(simNodes)
@@ -430,12 +449,16 @@ export function NodeGraph() {
         <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
           Relationships
         </span>
+        {/* One row per relation drawn on the canvas, using the exact same
+            stroke and dash pattern so the samples match what users see. */}
         {(
           [
+            ['plans', 'Your goal'],
             ['funds', 'Funds a goal'],
             ['protects', 'Protects'],
             ['owes', 'Liability'],
             ['shields', 'Safety net'],
+            ['owns', 'Yours, unlinked'],
           ] as const
         ).map(([relation, label]) => (
           <span key={relation} className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -446,9 +469,10 @@ export function NodeGraph() {
                 x2="25"
                 y2="2"
                 stroke={EDGE_STYLES[relation].stroke}
-                strokeWidth="2"
+                strokeWidth="1.6"
                 strokeLinecap="round"
                 strokeDasharray={EDGE_STYLES[relation].dash}
+                opacity="0.8"
               />
             </svg>
             {label}

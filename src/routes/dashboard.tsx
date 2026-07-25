@@ -86,7 +86,7 @@ function DashboardPage() {
   const goals = getGoals(nodes)
   const self = getSelf(nodes)
   const allocation = deriveAllocation(nodes)
-  const history = deriveNetWorthHistory(totals)
+  const history = deriveNetWorthHistory(nodes, totals)
   const cashFlow = deriveCashFlow(nodes, totals)
   const transactions = deriveTransactions(nodes)
   const xirr = blendedXirr(nodes)
@@ -218,8 +218,8 @@ function DashboardPage() {
           <CardHeader>
             <CardTitle>Net worth trend</CardTitle>
             <CardDescription>
-              Assets vs liabilities, last 24 months — {formatINRCompact(first.netWorth)} →{' '}
-              {formatINRCompact(last.netWorth)}
+              Modelled back from today's balance sheet — {formatINRCompact(first.netWorth)} →{' '}
+              {formatINRCompact(last.netWorth)} in 24 months
             </CardDescription>
           </CardHeader>
           <CardContent className="h-72">

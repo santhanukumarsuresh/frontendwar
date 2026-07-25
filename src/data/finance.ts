@@ -1,10 +1,4 @@
-import type {
-  CashFlowPoint,
-  FinEdge,
-  FinNode,
-  NetWorthPoint,
-  SelfNode,
-} from '@/types/finance'
+import type { FinEdge, FinNode, SelfNode } from '@/types/finance'
 
 /*
  * Sample dataset for one user — Rani S., 32, a product manager in Bengaluru.
@@ -277,45 +271,12 @@ export const OTHER_ASSETS = {
   realEstate: 8200000,
 } as const
 
-/* ── Time series ─────────────────────────────────────────────────────── */
-
-export const NET_WORTH_HISTORY: NetWorthPoint[] = [
-  { month: 'Aug 24', assets: 11020000, liabilities: 3890000, netWorth: 7130000 },
-  { month: 'Sep 24', assets: 11135000, liabilities: 3862000, netWorth: 7273000 },
-  { month: 'Oct 24', assets: 11080000, liabilities: 3834000, netWorth: 7246000 },
-  { month: 'Nov 24', assets: 11240000, liabilities: 3806000, netWorth: 7434000 },
-  { month: 'Dec 24', assets: 11390000, liabilities: 3778000, netWorth: 7612000 },
-  { month: 'Jan 25', assets: 11310000, liabilities: 3750000, netWorth: 7560000 },
-  { month: 'Feb 25', assets: 11150000, liabilities: 3722000, netWorth: 7428000 },
-  { month: 'Mar 25', assets: 11480000, liabilities: 3648000, netWorth: 7832000 },
-  { month: 'Apr 25', assets: 11620000, liabilities: 3620000, netWorth: 8000000 },
-  { month: 'May 25', assets: 11760000, liabilities: 3592000, netWorth: 8168000 },
-  { month: 'Jun 25', assets: 11895000, liabilities: 3564000, netWorth: 8331000 },
-  { month: 'Jul 25', assets: 11840000, liabilities: 3536000, netWorth: 8304000 },
-  { month: 'Aug 25', assets: 12010000, liabilities: 3508000, netWorth: 8502000 },
-  { month: 'Sep 25', assets: 12180000, liabilities: 3480000, netWorth: 8700000 },
-  { month: 'Oct 25', assets: 12325000, liabilities: 3452000, netWorth: 8873000 },
-  { month: 'Nov 25', assets: 12270000, liabilities: 3424000, netWorth: 8846000 },
-  { month: 'Dec 25', assets: 12455000, liabilities: 3396000, netWorth: 9059000 },
-  { month: 'Jan 26', assets: 12610000, liabilities: 3368000, netWorth: 9242000 },
-  { month: 'Feb 26', assets: 12530000, liabilities: 3340000, netWorth: 9190000 },
-  { month: 'Mar 26', assets: 12780000, liabilities: 3264000, netWorth: 9516000 },
-  { month: 'Apr 26', assets: 12905000, liabilities: 3236000, netWorth: 9669000 },
-  { month: 'May 26', assets: 12990000, liabilities: 3208000, netWorth: 9782000 },
-  { month: 'Jun 26', assets: 13065000, liabilities: 3180000, netWorth: 9885000 },
-  { month: 'Jul 26', assets: 13120000, liabilities: 3550000, netWorth: 9570000 },
-]
-
-export const CASH_FLOW: CashFlowPoint[] = [
-  { month: 'Dec 25', income: 185000, expenses: 108500, invested: 45500 },
-  { month: 'Jan 26', income: 185000, expenses: 94200, invested: 55500 },
-  { month: 'Feb 26', income: 185000, expenses: 91800, invested: 55500 },
-  { month: 'Mar 26', income: 213000, expenses: 99400, invested: 85500 },
-  { month: 'Apr 26', income: 196000, expenses: 95600, invested: 68000 },
-  { month: 'May 26', income: 196000, expenses: 102300, invested: 55500 },
-  { month: 'Jun 26', income: 196000, expenses: 93100, invested: 55500 },
-  { month: 'Jul 26', income: 196000, expenses: 96500, invested: 55500 },
-]
+/*
+ * There are no stored time series. The net-worth trend, cash flow and
+ * account activity are all computed in src/lib/derive.ts from the nodes
+ * above and the user's own figures, so every chart stays consistent with
+ * whatever the user enters on the profile page.
+ */
 
 /* Account activity is derived live from these nodes — see deriveTransactions
    in src/lib/derive.ts. */

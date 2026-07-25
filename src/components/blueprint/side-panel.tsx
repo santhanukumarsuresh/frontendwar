@@ -22,6 +22,7 @@ const RELATION_LABELS: Record<EdgeRelation, string> = {
   owes: 'Liability',
   plans: 'Goal',
   shields: 'Safety net',
+  owns: 'Owned by you',
 }
 
 /** Rule-based insights, computed live from the node's numbers. */

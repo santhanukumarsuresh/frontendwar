@@ -82,7 +82,12 @@ export type FinNode =
   | InsuranceNode
   | EmergencyNode
 
-export type EdgeRelation = 'funds' | 'protects' | 'owes' | 'plans' | 'shields'
+/**
+ * `owns` is never stored in the edge list — it is the fallback relation used
+ * when an item's linked goal/loan has been removed, so nothing in the graph
+ * floats disconnected from the user.
+ */
+export type EdgeRelation = 'funds' | 'protects' | 'owes' | 'plans' | 'shields' | 'owns'
 
 export interface FinEdge {
   source: string

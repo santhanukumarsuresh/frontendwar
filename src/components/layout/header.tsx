@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Home, LayoutDashboard, Milestone, UserRound, Waypoints } from 'lucide-react'
+import { Home, LayoutDashboard, Milestone, Waypoints } from 'lucide-react'
 import { Logo } from '@/components/logo'
 import { useAuthStore } from '@/store/auth'
 import { useFinanceStore } from '@/store/finance'
@@ -9,12 +9,12 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { ThemeToggle } from './theme-toggle'
 
+// The profile is reached through the avatar on the right, not a nav item.
 const NAV = [
   { to: '/', label: 'Home', icon: Home },
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/blueprint', label: 'Blueprint', icon: Waypoints },
   { to: '/timeline', label: 'Timeline', icon: Milestone },
-  { to: '/profile', label: 'Profile', icon: UserRound },
 ] as const
 
 function initialsOf(name: string): string {
@@ -70,11 +70,13 @@ export function Header() {
 
           {user ? (
             <>
-              {/* Avatar → profile */}
+              {/* Avatar → profile. Ring + scale on hover so it reads as a button. */}
               <Link
                 to="/profile"
-                aria-label="Your profile"
-                className="hidden size-8 place-items-center rounded-full bg-(image:--brand-gradient) text-xs font-bold text-white ring-offset-background transition-transform hover:scale-105 md:grid"
+                aria-label="Your profile and data"
+                title="Profile"
+                activeProps={{ className: 'ring-primary' }}
+                className="grid size-8 shrink-0 place-items-center rounded-full bg-(image:--brand-gradient) text-xs font-bold text-white ring-2 ring-transparent ring-offset-2 ring-offset-background transition-all hover:scale-105 hover:ring-primary/60"
               >
                 {initialsOf(selfName)}
               </Link>

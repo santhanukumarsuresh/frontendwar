@@ -1,10 +1,4 @@
-import {
-  CASH_FLOW,
-  DEFAULT_NODES,
-  EDGES,
-  NET_WORTH_HISTORY,
-  OTHER_ASSETS,
-} from '@/data/finance'
+import { DEFAULT_NODES, EDGES, OTHER_ASSETS } from '@/data/finance'
 import type {
   AllocationSlice,
   CashFlowPoint,
@@ -29,11 +23,18 @@ export function getNode(nodes: FinNode[], id: string): FinNode | undefined {
 
 /** Every edge touching a node, with the node on the other end resolved. */
 export function connectionsOf(nodes: FinNode[], id: string) {
-  return EDGES.flatMap((edge) => {
+  const connections = EDGES.flatMap((edge) => {
     if (edge.source !== id && edge.target !== id) return []
     const other = getNode(nodes, edge.source === id ? edge.target : edge.source)
     return other ? [{ edge, other }] : []
   })
+  // If every counterpart was removed (say, stocks that funded a deleted
+  // goal), fall back to the ownership link so the panel matches the graph.
+  if (connections.length === 0 && id !== 'you') {
+    const self = getSelf(nodes)
+    connections.push({ edge: { source: id, target: 'you', relation: 'owns' }, other: self })
+  }
+  return connections
 }
 
 export function getGoals(nodes: FinNode[]): GoalNode[] {
@@ -203,53 +204,107 @@ export function blendedXirr(nodes: FinNode[]): number {
   return total > 0 ? weighted / total : 0
 }
 
-/**
- * The 24-month demo history, rescaled so its final point equals TODAY's
- * actual assets/liabilities. When the user edits their numbers, the trend
- * chart lands exactly on the values shown everywhere else.
- */
-export function deriveNetWorthHistory(totals: Totals): NetWorthPoint[] {
-  const last = NET_WORTH_HISTORY[NET_WORTH_HISTORY.length - 1]
-  const assetFactor = totals.assets / last.assets
-  const liabilityFactor = last.liabilities > 0 ? totals.liabilities / last.liabilities : 0
-  return NET_WORTH_HISTORY.map((p) => {
-    const assets = Math.round(p.assets * assetFactor)
-    const liabilities = Math.round(p.liabilities * liabilityFactor)
-    return { month: p.month, assets, liabilities, netWorth: assets - liabilities }
-  })
+/** Growth assumption used across the app (also in the goal insights). */
+const ANNUAL_GROWTH = 0.11
+
+/** Short month label like "Jul 26", n months before today. */
+function monthLabel(monthsAgo: number): string {
+  const d = new Date()
+  d.setDate(1)
+  d.setMonth(d.getMonth() - monthsAgo)
+  return `${d.toLocaleString('en', { month: 'short' })} ${String(d.getFullYear()).slice(2)}`
 }
 
-/** Demo cash-flow shape, rescaled to the user's income / expenses / SIPs. */
+/**
+ * Walks today's actual balance sheet backwards, month by month, to build the
+ * 24-month trend. Each step undoes one month of savings and asset growth and
+ * adds back the loan principal that the EMIs actually cleared. A small
+ * deterministic market wobble keeps the curve honest about volatility.
+ * No stored history exists anywhere — this is entirely a function of the
+ * numbers the user entered.
+ */
+export function deriveNetWorthHistory(nodes: FinNode[], totals: Totals): NetWorthPoint[] {
+  const rMarket = ANNUAL_GROWTH / 12
+  const rProperty = 0.05 / 12 // property appreciates slower than the markets
+
+  // Principal component of the current EMIs (EMI minus this month's interest).
+  let principalPerMonth = 0
+  for (const n of nodes) {
+    if (n.category === 'loan') {
+      principalPerMonth += Math.max(0, n.emi - (n.outstanding * n.interestRate) / 100 / 12)
+    }
+  }
+
+  let marketAssets = Math.max(0, totals.assets - OTHER_ASSETS.realEstate)
+  let property = OTHER_ASSETS.realEstate
+  let liabilities = totals.liabilities
+  const points: NetWorthPoint[] = [
+    {
+      month: monthLabel(0),
+      assets: Math.round(marketAssets + property),
+      liabilities: Math.round(liabilities),
+      netWorth: Math.round(marketAssets + property - liabilities),
+    },
+  ]
+
+  for (let i = 1; i < 24; i++) {
+    const wobble = 0.012 * Math.sin(i * 1.7) + 0.008 * Math.sin(i * 0.6)
+    marketAssets = Math.max(0, (marketAssets - totals.monthlySip) / (1 + rMarket + wobble))
+    property = property / (1 + rProperty)
+    liabilities = liabilities > 0 ? liabilities + principalPerMonth : 0
+    const assets = marketAssets + property
+    points.unshift({
+      month: monthLabel(i),
+      assets: Math.round(assets),
+      liabilities: Math.round(liabilities),
+      netWorth: Math.round(assets - liabilities),
+    })
+  }
+  return points
+}
+
+/**
+ * Last eight months of cash flow from the actual income, expenses and SIP
+ * totals. Income and investments are steady; expenses carry a small
+ * deterministic seasonal swing around the entered monthly figure.
+ */
 export function deriveCashFlow(nodes: FinNode[], totals: Totals): CashFlowPoint[] {
   const self = getSelf(nodes)
-  const base = CASH_FLOW[CASH_FLOW.length - 1]
-  const incomeFactor = self.monthlyIncome / base.income
-  const expenseFactor = self.monthlyExpenses / base.expenses
-  const investedFactor = base.invested > 0 ? totals.monthlySip / base.invested : 0
-  return CASH_FLOW.map((p) => ({
-    month: p.month,
-    income: Math.round(p.income * incomeFactor),
-    expenses: Math.round(p.expenses * expenseFactor),
-    invested: Math.round(p.invested * investedFactor),
-  }))
+  const points: CashFlowPoint[] = []
+  for (let i = 7; i >= 0; i--) {
+    const seasonality = 1 + 0.06 * Math.sin(i * 1.3)
+    points.push({
+      month: monthLabel(i),
+      income: self.monthlyIncome,
+      expenses: Math.round(self.monthlyExpenses * seasonality),
+      invested: totals.monthlySip,
+    })
+  }
+  return points
 }
 
-/** July's account activity, built from the actual salary, SIPs and EMIs. */
+/** Assumed annual dividend yield on directly held stocks, paid quarterly. */
+const STOCK_DIVIDEND_YIELD = 0.015
+
+/** This month's account activity, built from the actual salary, SIPs and EMIs. */
 export function deriveTransactions(nodes: FinNode[]): Transaction[] {
   const self = getSelf(nodes)
   const inv = (id: string) => nodes.find((n): n is InvestmentNode => n.id === id)
+  const month = new Date().toLocaleString('en', { month: 'short' })
+  const day = (d: string) => `${d} ${month}`
+
   const txs: Transaction[] = [
     {
       id: 't-salary',
-      date: '25 Jul',
-      label: 'Salary — Meridian Labs',
+      date: day('25'),
+      label: 'Salary credited',
       category: 'Income',
       amount: self.monthlyIncome,
       direction: 'credit',
     },
     {
       id: 't-sip',
-      date: '10 Jul',
+      date: day('10'),
       label: 'SIP — Flexi-cap fund',
       category: 'Investment',
       amount: inv('inv-equity-mf')?.monthlyContribution ?? 0,
@@ -260,7 +315,7 @@ export function deriveTransactions(nodes: FinNode[]): Transaction[] {
     if (n.category === 'loan') {
       txs.push({
         id: `t-${n.id}`,
-        date: '08 Jul',
+        date: day('08'),
         label: `${n.label} EMI`,
         category: 'Loan',
         amount: n.emi,
@@ -268,10 +323,11 @@ export function deriveTransactions(nodes: FinNode[]): Transaction[] {
       })
     }
   }
+  const stocks = inv('inv-stocks')
   txs.push(
     {
       id: 't-nps',
-      date: '05 Jul',
+      date: day('05'),
       label: 'NPS Tier-1 contribution',
       category: 'Investment',
       amount: inv('inv-nps')?.monthlyContribution ?? 0,
@@ -279,7 +335,7 @@ export function deriveTransactions(nodes: FinNode[]): Transaction[] {
     },
     {
       id: 't-gold',
-      date: '02 Jul',
+      date: day('02'),
       label: 'Gold ETF purchase',
       category: 'Investment',
       amount: inv('inv-gold')?.monthlyContribution ?? 0,
@@ -287,10 +343,11 @@ export function deriveTransactions(nodes: FinNode[]): Transaction[] {
     },
     {
       id: 't-dividend',
-      date: '01 Jul',
-      label: 'Dividend — large-caps',
+      date: day('01'),
+      label: 'Dividend — direct stocks',
       category: 'Income',
-      amount: 4150,
+      // Quarterly payout at the assumed yield on the holding's actual value.
+      amount: stocks ? Math.round((stocks.currentValue * STOCK_DIVIDEND_YIELD) / 4) : 0,
       direction: 'credit',
     },
   )
