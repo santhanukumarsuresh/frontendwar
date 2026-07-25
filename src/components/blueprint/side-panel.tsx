@@ -1,6 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Link } from '@tanstack/react-router'
-import { AlertTriangle, ArrowRight, CheckCircle2, Info, Pencil, X } from 'lucide-react'
+import { AlertTriangle, ArrowRight, CheckCircle2, Info, X } from 'lucide-react'
 import { connectionsOf } from '@/lib/derive'
 import { clampPct, formatINR, formatINRCompact, formatPct } from '@/lib/format'
 import { useBlueprintStore } from '@/store/blueprint'
@@ -334,21 +333,14 @@ export function SidePanel() {
                 <h2 className="text-lg font-bold leading-tight">{node.label}</h2>
               </div>
             </div>
-            <div className="flex items-center">
-              <Button asChild variant="ghost" size="icon">
-                <Link to="/profile" aria-label="Edit this in your profile" title="Edit in profile">
-                  <Pencil className="size-4" />
-                </Link>
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Close panel"
-                onClick={() => select(null)}
-              >
-                <X className="size-4" />
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Close panel"
+              onClick={() => select(null)}
+            >
+              <X className="size-4" />
+            </Button>
           </div>
 
           <p className="mt-2 text-sm text-muted-foreground">{node.description}</p>

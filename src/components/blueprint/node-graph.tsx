@@ -6,6 +6,7 @@ import { formatINRCompact } from '@/lib/format'
 import { useBlueprintStore } from '@/store/blueprint'
 import { useFinanceStore } from '@/store/finance'
 import { CATEGORY_COLORS } from '@/components/blueprint/meta'
+import { cn } from '@/lib/utils'
 import type { EdgeRelation, FinNode } from '@/types/finance'
 
 const EDGE_STYLES: Record<EdgeRelation, { stroke: string; dash?: string; flow?: boolean }> = {
@@ -71,6 +72,15 @@ const LINK_DISTANCE: Record<EdgeRelation, number> = {
   shields: 125,
   owns: 170,
 }
+
+const LEGEND_ROWS: [EdgeRelation, string][] = [
+  ['plans', 'Your goal'],
+  ['funds', 'Funds a goal'],
+  ['protects', 'Protects'],
+  ['owes', 'Liability'],
+  ['shields', 'Safety net'],
+  ['owns', 'Yours, unlinked'],
+]
 
 /**
  * Build the force simulation and settle it synchronously so the graph is
@@ -150,8 +160,10 @@ export function NodeGraph() {
   const selectedId = useBlueprintStore((s) => s.selectedId)
   const hoveredId = useBlueprintStore((s) => s.hoveredId)
   const hiddenCategories = useBlueprintStore((s) => s.hiddenCategories)
+  const activeRelations = useBlueprintStore((s) => s.activeRelations)
   const select = useBlueprintStore((s) => s.select)
   const hover = useBlueprintStore((s) => s.hover)
+  const toggleRelation = useBlueprintStore((s) => s.toggleRelation)
 
   const allNodes = useFinanceStore((s) => s.nodes)
   const visible = useMemo(
@@ -282,6 +294,28 @@ export function NodeGraph() {
     return set
   }, [activeId])
 
+  /* Legend highlighting: clicking a legend row lights up every edge of that
+     relation (and the nodes it touches). Node hover/selection wins while
+     it is active, so the two modes don't fight. */
+  const relationFilterOn = activeId == null && activeRelations.length > 0
+  const relationNodeIds = useMemo(() => {
+    if (!relationFilterOn) return null
+    const set = new Set<string>()
+    for (const l of simLinks) {
+      if (activeRelations.includes(l.relation)) {
+        set.add(typeof l.source === 'object' ? (l.source as SimNode).id : (l.source as string))
+        set.add(typeof l.target === 'object' ? (l.target as SimNode).id : (l.target as string))
+      }
+    }
+    return set
+  }, [relationFilterOn, activeRelations, simLinks])
+
+  /* Only the relations actually drawn right now get a legend row. */
+  const presentRelations = useMemo(() => {
+    const present = new Set(simLinks.map((l) => l.relation))
+    return LEGEND_ROWS.filter(([relation]) => present.has(relation))
+  }, [simLinks])
+
   return (
     <>
       <svg
@@ -299,7 +333,10 @@ export function NodeGraph() {
           const t = link.target as SimNode
           const style = EDGE_STYLES[link.relation]
           const touchesActive = activeId != null && (s.id === activeId || t.id === activeId)
-          const dimmed = activeId != null && !touchesActive
+          const relationHit = relationFilterOn && activeRelations.includes(link.relation)
+          const highlighted = touchesActive || relationHit
+          const dimmed =
+            (activeId != null && !touchesActive) || (relationFilterOn && !relationHit)
           return (
             <line
               key={i}
@@ -308,11 +345,11 @@ export function NodeGraph() {
               x2={t.x}
               y2={t.y}
               stroke={style.stroke}
-              strokeWidth={touchesActive ? 2.4 : 1.4}
+              strokeWidth={highlighted ? 2.4 : 1.4}
               strokeDasharray={style.dash}
               strokeLinecap="round"
               className={style.flow ? 'edge-flow' : undefined}
-              opacity={dimmed ? 0.07 : touchesActive ? 0.95 : 0.45}
+              opacity={dimmed ? 0.07 : highlighted ? 0.95 : 0.45}
             />
           )
         })}
@@ -322,7 +359,9 @@ export function NodeGraph() {
           const color = CATEGORY_COLORS[node.data.category]
           const isActive = node.id === activeId
           const isSelected = node.id === selectedId
-          const dimmed = neighborIds != null && !neighborIds.has(node.id)
+          const dimmed =
+            (neighborIds != null && !neighborIds.has(node.id)) ||
+            (relationNodeIds != null && !relationNodeIds.has(node.id))
           const amount = nodeAmount(node.data)
           return (
             <g
@@ -444,40 +483,50 @@ export function NodeGraph() {
         </button>
       </div>
 
-      {/* Relationship legend — makes the dependency lines self-explanatory */}
-      <div className="absolute bottom-3 left-3 z-10 hidden flex-col gap-1.5 rounded-lg border bg-card/90 p-3 backdrop-blur sm:flex">
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+      {/* Relationship legend. Rows appear only for relations drawn on the
+          canvas right now, use the exact same stroke and dash pattern, and
+          clicking one highlights those edges in the graph. Sits bottom-right,
+          clear of the view controls; the side panel covers it when open. */}
+      <div
+        className="absolute bottom-3 right-3 z-10 hidden flex-col gap-0.5 rounded-lg border bg-card/90 p-2.5 backdrop-blur sm:flex"
+        role="group"
+        aria-label="Relationship legend — click to highlight"
+      >
+        <span className="px-1 pb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
           Relationships
         </span>
-        {/* One row per relation drawn on the canvas, using the exact same
-            stroke and dash pattern so the samples match what users see. */}
-        {(
-          [
-            ['plans', 'Your goal'],
-            ['funds', 'Funds a goal'],
-            ['protects', 'Protects'],
-            ['owes', 'Liability'],
-            ['shields', 'Safety net'],
-            ['owns', 'Yours, unlinked'],
-          ] as const
-        ).map(([relation, label]) => (
-          <span key={relation} className="flex items-center gap-2 text-xs text-muted-foreground">
-            <svg width="26" height="4" aria-hidden>
-              <line
-                x1="1"
-                y1="2"
-                x2="25"
-                y2="2"
-                stroke={EDGE_STYLES[relation].stroke}
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeDasharray={EDGE_STYLES[relation].dash}
-                opacity="0.8"
-              />
-            </svg>
-            {label}
-          </span>
-        ))}
+        {presentRelations.map(([relation, label]) => {
+          const active = activeRelations.includes(relation)
+          return (
+            <button
+              key={relation}
+              onClick={() => toggleRelation(relation)}
+              aria-pressed={active}
+              title={active ? 'Click to clear highlight' : 'Click to highlight these links'}
+              className={cn(
+                'flex items-center gap-2 rounded-md px-1 py-0.5 text-left text-xs transition-colors',
+                active
+                  ? 'bg-accent font-semibold text-foreground'
+                  : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground',
+              )}
+            >
+              <svg width="26" height="4" aria-hidden>
+                <line
+                  x1="1"
+                  y1="2"
+                  x2="25"
+                  y2="2"
+                  stroke={EDGE_STYLES[relation].stroke}
+                  strokeWidth={active ? 2.4 : 1.6}
+                  strokeLinecap="round"
+                  strokeDasharray={EDGE_STYLES[relation].dash}
+                  opacity={active ? 1 : 0.8}
+                />
+              </svg>
+              {label}
+            </button>
+          )
+        })}
       </div>
     </>
   )

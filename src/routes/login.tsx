@@ -86,7 +86,7 @@ function LoginPage() {
         className="hidden flex-col gap-6 lg:flex"
       >
         <Logo className="size-11" />
-        <h1 className="text-balance text-3xl font-bold tracking-tight xl:text-4xl">
+        <h1 className="text-3xl font-bold tracking-tight text-balance xl:text-4xl">
           A few details, and your{' '}
           <span className="bg-(image:--brand-gradient) bg-clip-text text-transparent">
             financial blueprint
@@ -138,7 +138,7 @@ function LoginPage() {
                     className="h-8"
                     id="su-name"
                     required
-                    placeholder="e.g. Rani Sharma"
+                    placeholder="e.g. Rani S."
                     {...field('name')}
                   />
                 </div>

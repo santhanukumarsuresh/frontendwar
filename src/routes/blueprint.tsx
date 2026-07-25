@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { requireAuth } from '@/lib/auth-guard'
 import { motion } from 'framer-motion'
-import { MousePointerClick, Pencil } from 'lucide-react'
+import { Info, MousePointerClick } from 'lucide-react'
 import { NodeGraph } from '@/components/blueprint/node-graph'
 import { SidePanel } from '@/components/blueprint/side-panel'
 import { CATEGORY_COLORS, CATEGORY_LABELS } from '@/components/blueprint/meta'
@@ -44,7 +44,7 @@ function BlueprintPage() {
               <MousePointerClick className="size-3.5" /> Click a node for insights
             </span>
             <span className="inline-flex items-center gap-1">
-              <Pencil className="size-3.5" /> Numbers come from your{' '}
+              <Info className="size-3.5" /> Numbers come from your{' '}
               <Link to="/profile" className="font-medium text-primary underline-offset-4 hover:underline">
                 profile
               </Link>
