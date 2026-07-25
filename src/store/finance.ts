@@ -14,6 +14,10 @@ import type { FinNode } from '@/types/finance'
 interface FinanceState {
   nodes: FinNode[]
   updateNode: (id: string, patch: Partial<FinNode>) => void
+  /** Drop an item the user doesn't have (e.g. no car loan). "you" is fixed. */
+  removeNode: (id: string) => void
+  /** Bring back a previously removed item, with its sample figures. */
+  restoreNode: (id: string) => void
   resetData: () => void
 }
 
@@ -51,20 +55,38 @@ export const useFinanceStore = create<FinanceState>()(
             state.nodes.map((n) => (n.id === id ? ({ ...n, ...patch } as FinNode) : n)),
           ),
         })),
+      removeNode: (id) =>
+        set((state) => {
+          if (id === 'you') return state
+          return { nodes: recompute(state.nodes.filter((n) => n.id !== id)) }
+        }),
+      restoreNode: (id) =>
+        set((state) => {
+          if (state.nodes.some((n) => n.id === id)) return state
+          const byId = new Map(state.nodes.map((n) => [n.id, n]))
+          // Rebuild in canonical order so the restored item lands in place.
+          const nodes = DEFAULT_NODES.flatMap((d) => {
+            if (d.id === id) return [d]
+            const existing = byId.get(d.id)
+            return existing ? [existing] : []
+          })
+          return { nodes: recompute(nodes) }
+        }),
       resetData: () => set({ nodes: DEFAULT_NODES }),
     }),
     {
       name: 'wealthdna-data',
       version: 1,
-      // Only accept a persisted node list that still matches the app's schema
-      // (same ids) — otherwise fall back to the demo dataset.
+      // Accept any persisted subset of known nodes (users may remove items
+      // they don't have); require only the "you" node. Anything else falls
+      // back to the sample dataset.
       merge: (persisted, current) => {
         const p = persisted as Partial<FinanceState> | undefined
-        const valid =
-          Array.isArray(p?.nodes) &&
-          p.nodes.length === DEFAULT_NODES.length &&
-          DEFAULT_NODES.every((d) => p.nodes!.some((n) => n?.id === d.id))
-        return valid ? { ...current, nodes: recompute(p.nodes as FinNode[]) } : current
+        if (!Array.isArray(p?.nodes)) return current
+        const knownIds = new Set(DEFAULT_NODES.map((d) => d.id))
+        const nodes = p.nodes.filter((n): n is FinNode => Boolean(n?.id) && knownIds.has(n.id))
+        const hasSelf = nodes.some((n) => n.category === 'self')
+        return hasSelf ? { ...current, nodes: recompute(nodes) } : current
       },
     },
   ),

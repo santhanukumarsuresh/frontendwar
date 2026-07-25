@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { requireAuth } from '@/lib/auth-guard'
 import { motion } from 'framer-motion'
 import { MousePointerClick, Pencil } from 'lucide-react'
 import { NodeGraph } from '@/components/blueprint/node-graph'
@@ -10,6 +11,7 @@ import { cn } from '@/lib/utils'
 import type { NodeCategory } from '@/types/finance'
 
 export const Route = createFileRoute('/blueprint')({
+  beforeLoad: requireAuth,
   head: () => ({
     meta: [
       { title: 'Blueprint — Wealth DNA' },
@@ -42,9 +44,9 @@ function BlueprintPage() {
               <MousePointerClick className="size-3.5" /> Click a node for insights
             </span>
             <span className="inline-flex items-center gap-1">
-              <Pencil className="size-3.5" /> Numbers come from{' '}
-              <Link to="/my-data" className="font-medium text-primary underline-offset-4 hover:underline">
-                My Data
+              <Pencil className="size-3.5" /> Numbers come from your{' '}
+              <Link to="/profile" className="font-medium text-primary underline-offset-4 hover:underline">
+                profile
               </Link>
             </span>
           </p>

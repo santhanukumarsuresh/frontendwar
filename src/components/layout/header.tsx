@@ -1,15 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { AnimatePresence, motion } from 'framer-motion'
-import {
-  ClipboardList,
-  Home,
-  LayoutDashboard,
-  Milestone,
-  Settings,
-  Waypoints,
-} from 'lucide-react'
+import { Home, LayoutDashboard, Milestone, UserRound, Waypoints } from 'lucide-react'
 import { Logo } from '@/components/logo'
+import { useAuthStore } from '@/store/auth'
+import { useFinanceStore } from '@/store/finance'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { ThemeToggle } from './theme-toggle'
 
@@ -18,12 +14,20 @@ const NAV = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/blueprint', label: 'Blueprint', icon: Waypoints },
   { to: '/timeline', label: 'Timeline', icon: Milestone },
-  { to: '/my-data', label: 'My Data', icon: ClipboardList },
-  { to: '/settings', label: 'Settings', icon: Settings },
+  { to: '/profile', label: 'Profile', icon: UserRound },
 ] as const
+
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/)
+  return ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase() || 'W'
+}
 
 export function Header() {
   const [open, setOpen] = useState(false)
+  const user = useAuthStore((s) => s.user)
+  const selfName = useFinanceStore(
+    (s) => s.nodes.find((n) => n.category === 'self')?.label ?? 'W',
+  )
 
   // Close the drawer with Escape.
   useEffect(() => {
@@ -43,61 +47,79 @@ export function Header() {
           </span>
         </Link>
 
-        {/* Desktop nav */}
-        <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
-          {NAV.map(({ to, label, icon: Icon }) => (
-            <Link
-              key={to}
-              to={to}
-              className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground [&.active]:bg-accent [&.active]:text-foreground"
-              activeProps={{ className: 'active' }}
-              activeOptions={{ exact: to === '/' }}
-            >
-              <Icon className="size-4" />
-              <span className="hidden lg:inline">{label}</span>
-            </Link>
-          ))}
-        </nav>
+        {/* Desktop nav — app pages need an account */}
+        {user && (
+          <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
+            {NAV.map(({ to, label, icon: Icon }) => (
+              <Link
+                key={to}
+                to={to}
+                className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground [&.active]:bg-accent [&.active]:text-foreground"
+                activeProps={{ className: 'active' }}
+                activeOptions={{ exact: to === '/' }}
+              >
+                <Icon className="size-4" />
+                <span className="hidden lg:inline">{label}</span>
+              </Link>
+            ))}
+          </nav>
+        )}
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <ThemeToggle />
 
-          {/* Animated hamburger — mobile only */}
-          {/* z-[60] keeps the button clickable above the open drawer, so the
-              same control morphs into the X that closes it. */}
-          <button
-            className="relative z-60 grid size-9 place-items-center rounded-md text-foreground transition-colors hover:bg-accent md:hidden"
-            aria-label={open ? 'Close menu' : 'Open menu'}
-            aria-expanded={open}
-            onClick={() => setOpen((o) => !o)}
-          >
-            <span className="relative block h-3.5 w-5">
-              <span
-                className={cn(
-                  'absolute left-0 top-0 block h-0.5 w-5 rounded-full bg-current transition-all duration-300',
-                  open && 'top-1.5 rotate-45',
-                )}
-              />
-              <span
-                className={cn(
-                  'absolute left-0 top-1.5 block h-0.5 w-5 rounded-full bg-current transition-all duration-300',
-                  open && 'opacity-0',
-                )}
-              />
-              <span
-                className={cn(
-                  'absolute left-0 top-3 block h-0.5 w-5 rounded-full bg-current transition-all duration-300',
-                  open && 'top-1.5 -rotate-45',
-                )}
-              />
-            </span>
-          </button>
+          {user ? (
+            <>
+              {/* Avatar → profile */}
+              <Link
+                to="/profile"
+                aria-label="Your profile"
+                className="hidden size-8 place-items-center rounded-full bg-(image:--brand-gradient) text-xs font-bold text-white ring-offset-background transition-transform hover:scale-105 md:grid"
+              >
+                {initialsOf(selfName)}
+              </Link>
+
+              {/* Animated hamburger — mobile only. z-60 keeps it clickable
+                  above the open drawer, so it morphs into the closing X. */}
+              <button
+                className="relative z-60 grid size-9 place-items-center rounded-md text-foreground transition-colors hover:bg-accent md:hidden"
+                aria-label={open ? 'Close menu' : 'Open menu'}
+                aria-expanded={open}
+                onClick={() => setOpen((o) => !o)}
+              >
+                <span className="relative block h-3.5 w-5">
+                  <span
+                    className={cn(
+                      'absolute left-0 top-0 block h-0.5 w-5 rounded-full bg-current transition-all duration-300',
+                      open && 'top-1.5 rotate-45',
+                    )}
+                  />
+                  <span
+                    className={cn(
+                      'absolute left-0 top-1.5 block h-0.5 w-5 rounded-full bg-current transition-all duration-300',
+                      open && 'opacity-0',
+                    )}
+                  />
+                  <span
+                    className={cn(
+                      'absolute left-0 top-3 block h-0.5 w-5 rounded-full bg-current transition-all duration-300',
+                      open && 'top-1.5 -rotate-45',
+                    )}
+                  />
+                </span>
+              </button>
+            </>
+          ) : (
+            <Button asChild size="sm">
+              <Link to="/login">Sign in</Link>
+            </Button>
+          )}
         </div>
       </div>
 
       {/* Mobile drawer */}
       <AnimatePresence>
-        {open && (
+        {open && user && (
           <>
             <motion.div
               initial={{ opacity: 0 }}

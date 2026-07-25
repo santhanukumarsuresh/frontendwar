@@ -335,7 +335,7 @@ export function SidePanel() {
             </div>
             <div className="flex items-center">
               <Button asChild variant="ghost" size="icon">
-                <Link to="/my-data" aria-label="Edit this in My Data" title="Edit in My Data">
+                <Link to="/profile" aria-label="Edit this in your profile" title="Edit in profile">
                   <Pencil className="size-4" />
                 </Link>
               </Button>

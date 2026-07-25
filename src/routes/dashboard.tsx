@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { requireAuth } from '@/lib/auth-guard'
 import { motion } from 'framer-motion'
 import {
   ArrowDownRight,
@@ -43,6 +44,7 @@ import { cn } from '@/lib/utils'
 import type { InsuranceNode, LoanNode } from '@/types/finance'
 
 export const Route = createFileRoute('/dashboard')({
+  beforeLoad: requireAuth,
   head: () => ({
     meta: [
       { title: 'Dashboard — Wealth DNA' },
@@ -250,9 +252,6 @@ function DashboardPage() {
                   width={52}
                 />
                 <Tooltip contentStyle={TOOLTIP_STYLE} formatter={tooltipINR} />
-                {/* Recharts' own draw animation stutters against the route
-                    transition on code-split navigations — the card-level
-                    motion fade covers the entrance instead. */}
                 <Area
                   type="monotone"
                   dataKey="assets"
@@ -260,7 +259,7 @@ function DashboardPage() {
                   stroke="var(--chart-1)"
                   fill="url(#gAssets)"
                   strokeWidth={2}
-                  isAnimationActive={false}
+                  animationDuration={1100}
                 />
                 <Area
                   type="monotone"
@@ -269,7 +268,7 @@ function DashboardPage() {
                   stroke="var(--chart-2)"
                   fill="url(#gNet)"
                   strokeWidth={2}
-                  isAnimationActive={false}
+                  animationDuration={1100}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -294,7 +293,7 @@ function DashboardPage() {
                   innerRadius={52}
                   outerRadius={82}
                   paddingAngle={3}
-                  isAnimationActive={false}
+                  animationDuration={900}
                 >
                   {allocation.map((_, i) => (
                     <Cell key={i} fill={CHART[i % CHART.length]} stroke="var(--card)" />
@@ -343,21 +342,21 @@ function DashboardPage() {
                   name="Income"
                   fill="var(--chart-2)"
                   radius={[4, 4, 0, 0]}
-                  isAnimationActive={false}
+                  animationDuration={900}
                 />
                 <Bar
                   dataKey="expenses"
                   name="Expenses"
                   fill="var(--chart-4)"
                   radius={[4, 4, 0, 0]}
-                  isAnimationActive={false}
+                  animationDuration={900}
                 />
                 <Bar
                   dataKey="invested"
                   name="Invested"
                   fill="var(--chart-1)"
                   radius={[4, 4, 0, 0]}
-                  isAnimationActive={false}
+                  animationDuration={900}
                 />
               </BarChart>
             </ResponsiveContainer>

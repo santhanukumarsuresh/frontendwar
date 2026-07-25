@@ -1,13 +1,12 @@
 /**
  * Runs `apply` (the DOM/state change that switches the theme) inside a
- * View Transition, then plays a premium full-page reveal:
- *   - the incoming theme is unveiled via an expanding circular clip-path from
- *     the click point, easing smoothly (easeInOutQuart), and
- *   - the outgoing theme settles back with a subtle scale + fade for depth.
+ * View Transition, then animates the swap:
+ *   - the incoming theme is revealed by an expanding circular clip-path
+ *     from the click point, and
+ *   - the outgoing theme settles back with a slight scale and fade.
  *
- * Gracefully degrades to an instant swap when:
- *   - the browser lacks the View Transitions API, or
- *   - the user prefers reduced motion.
+ * Falls back to an instant swap when the browser lacks the View
+ * Transitions API or the user prefers reduced motion.
  */
 type ViewTransitionDocument = Document & {
   startViewTransition?: (callback: () => void) => { ready: Promise<void> }

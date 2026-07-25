@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { requireAuth } from '@/lib/auth-guard'
 import { motion } from 'framer-motion'
 import {
   Car,
@@ -19,6 +20,7 @@ import { cn } from '@/lib/utils'
 import type { GoalHorizon, Milestone } from '@/types/finance'
 
 export const Route = createFileRoute('/timeline')({
+  beforeLoad: requireAuth,
   head: () => ({
     meta: [
       { title: 'Timeline — Wealth DNA' },

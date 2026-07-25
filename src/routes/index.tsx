@@ -2,13 +2,18 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import {
   ArrowRight,
+  ClipboardList,
   LayoutDashboard,
+  LockKeyhole,
   Milestone,
   ShieldCheck,
   Sparkles,
+  UserRoundPlus,
   Waypoints,
+  WifiOff,
 } from 'lucide-react'
 import { computeTotals, getGoals } from '@/lib/derive'
+import { useAuthStore } from '@/store/auth'
 import { useFinanceStore } from '@/store/finance'
 import { formatINRCompact, formatPct } from '@/lib/format'
 import { AnimatedNumber } from '@/components/animated-number'
@@ -22,7 +27,7 @@ export const Route = createFileRoute('/')({
       {
         name: 'description',
         content:
-          'See your entire financial ecosystem — goals, investments, loans, insurance and emergency funds — as one interactive, living blueprint.',
+          'See your entire financial ecosystem — goals, investments, loans, insurance and emergency funds — as one interactive, living blueprint. Free, private, offline-ready.',
       },
     ],
   }),
@@ -57,6 +62,24 @@ const FEATURES = [
     description:
       'Every node carries live, rule-based insights: step up this SIP, prepay that loan, top up this cover.',
     to: '/blueprint',
+  },
+] as const
+
+const STEPS = [
+  {
+    icon: UserRoundPlus,
+    title: 'Create your account',
+    text: 'A few basic details — name, income, expenses. No backend: it all stays on your device.',
+  },
+  {
+    icon: ClipboardList,
+    title: 'Make the data yours',
+    text: 'Start from realistic sample figures and adjust or remove anything from your profile.',
+  },
+  {
+    icon: Waypoints,
+    title: 'Watch it come alive',
+    text: 'Your blueprint, dashboard and timeline recalculate live with every change you make.',
   },
 ] as const
 
@@ -108,18 +131,30 @@ function HeroGraph() {
 }
 
 function HomePage() {
+  const user = useAuthStore((s) => s.user)
   const nodes = useFinanceStore((s) => s.nodes)
   const totals = computeTotals(nodes)
   const goals = getGoals(nodes)
   const onTrack = goals.filter((g) => g.planProgress >= 75).length
 
-  const stats: { label: string; value?: number; format?: (v: number) => string; text?: string }[] =
-    [
-      { label: 'Net worth tracked', value: totals.netWorth, format: formatINRCompact },
-      { label: 'Goals on track', text: `${onTrack} of ${goals.length}` },
-      { label: 'Protection cover', value: totals.insuranceCover, format: formatINRCompact },
-      { label: 'Savings rate', value: totals.savingsRate, format: (v) => formatPct(v) },
-    ]
+  const personalStats: {
+    label: string
+    value?: number
+    format?: (v: number) => string
+    text?: string
+  }[] = [
+    { label: 'Net worth tracked', value: totals.netWorth, format: formatINRCompact },
+    { label: 'Goals on track', text: `${onTrack} of ${goals.length}` },
+    { label: 'Protection cover', value: totals.insuranceCover, format: formatINRCompact },
+    { label: 'Savings rate', value: totals.savingsRate, format: (v) => formatPct(v) },
+  ]
+
+  const marketingStats = [
+    { icon: LockKeyhole, label: 'Local-first privacy', text: 'Nothing leaves your browser' },
+    { icon: WifiOff, label: 'Works offline', text: 'Installable PWA' },
+    { icon: Sparkles, label: 'Realistic math', text: 'Compounding, not guesses' },
+    { icon: ShieldCheck, label: 'Free forever', text: 'No card, no catch' },
+  ]
 
   return (
     <div className="flex flex-col gap-16">
@@ -163,14 +198,29 @@ function HomePage() {
             transition={{ delay: 0.15 }}
             className="flex flex-wrap items-center gap-3"
           >
-            <Button asChild size="lg">
-              <Link to="/blueprint">
-                Explore your blueprint <ArrowRight className="size-4" />
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline">
-              <Link to="/dashboard">Open dashboard</Link>
-            </Button>
+            {user ? (
+              <>
+                <Button asChild size="lg">
+                  <Link to="/dashboard">
+                    Open your dashboard <ArrowRight className="size-4" />
+                  </Link>
+                </Button>
+                <Button asChild size="lg" variant="outline">
+                  <Link to="/blueprint">Explore your blueprint</Link>
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button asChild size="lg">
+                  <Link to="/login">
+                    Start free — 2 minutes <ArrowRight className="size-4" />
+                  </Link>
+                </Button>
+                <Button asChild size="lg" variant="outline">
+                  <a href="#how-it-works">See how it works</a>
+                </Button>
+              </>
+            )}
           </motion.div>
         </div>
 
@@ -183,25 +233,37 @@ function HomePage() {
         </motion.div>
       </section>
 
-      {/* Stats strip */}
+      {/* Stats strip — personal once signed in, product promises before */}
       <motion.section
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         className="grid grid-cols-2 gap-4 rounded-xl border bg-card/60 p-6 sm:grid-cols-4"
-        aria-label="Portfolio summary"
+        aria-label={user ? 'Portfolio summary' : 'Why Wealth DNA'}
       >
-        {stats.map(({ label, value, format, text }) => (
-          <div key={label} className="text-center">
-            <div className="text-2xl font-bold tabular-nums text-primary">
-              {value != null && format ? <AnimatedNumber value={value} format={format} /> : text}
-            </div>
-            <div className="mt-1 text-sm text-muted-foreground">{label}</div>
-          </div>
-        ))}
+        {user
+          ? personalStats.map(({ label, value, format, text }) => (
+              <div key={label} className="text-center">
+                <div className="text-2xl font-bold tabular-nums text-primary">
+                  {value != null && format ? (
+                    <AnimatedNumber value={value} format={format} />
+                  ) : (
+                    text
+                  )}
+                </div>
+                <div className="mt-1 text-sm text-muted-foreground">{label}</div>
+              </div>
+            ))
+          : marketingStats.map(({ icon: Icon, label, text }) => (
+              <div key={label} className="flex flex-col items-center gap-1 text-center">
+                <Icon className="size-5 text-primary" />
+                <div className="text-sm font-bold">{label}</div>
+                <div className="text-xs text-muted-foreground">{text}</div>
+              </div>
+            ))}
       </motion.section>
 
-      <section className="grid gap-4 sm:grid-cols-2">
+      <section className="grid gap-4 sm:grid-cols-2" aria-label="Features">
         {FEATURES.map(({ icon: Icon, title, description, to }, i) => (
           <motion.div
             key={title}
@@ -210,7 +272,7 @@ function HomePage() {
             viewport={{ once: true }}
             transition={{ delay: i * 0.05 }}
           >
-            <Link to={to} className="group block h-full">
+            <Link to={user ? to : '/login'} className="group block h-full">
               <Card className="h-full transition-all duration-300 group-hover:-translate-y-1 group-hover:border-primary group-hover:shadow-lg">
                 <CardHeader>
                   <span className="grid size-10 place-items-center rounded-lg bg-primary/10 text-primary">
@@ -220,13 +282,63 @@ function HomePage() {
                   <CardDescription>{description}</CardDescription>
                 </CardHeader>
                 <CardContent className="text-sm font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100">
-                  Open <ArrowRight className="inline size-3.5" />
+                  {user ? 'Open' : 'Sign in to explore'} <ArrowRight className="inline size-3.5" />
                 </CardContent>
               </Card>
             </Link>
           </motion.div>
         ))}
       </section>
+
+      {/* How it works */}
+      <section id="how-it-works" className="scroll-mt-20" aria-label="How it works">
+        <h2 className="text-center text-2xl font-bold tracking-tight">
+          Up and running in three steps
+        </h2>
+        <div className="mt-8 grid gap-4 sm:grid-cols-3">
+          {STEPS.map(({ icon: Icon, title, text }, i) => (
+            <motion.div
+              key={title}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.08 }}
+              className="relative rounded-xl border bg-card/60 p-6"
+            >
+              <span className="absolute right-4 top-3 text-4xl font-bold text-primary/10">
+                {i + 1}
+              </span>
+              <span className="grid size-10 place-items-center rounded-lg bg-primary/10 text-primary">
+                <Icon className="size-5" />
+              </span>
+              <h3 className="mt-3 font-bold">{title}</h3>
+              <p className="mt-1 text-sm text-muted-foreground">{text}</p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* Closing CTA */}
+      {!user && (
+        <motion.section
+          initial={{ opacity: 0, scale: 0.98 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          className="relative overflow-hidden rounded-2xl bg-(image:--brand-gradient) p-10 text-center text-white"
+        >
+          <h2 className="text-balance text-3xl font-bold tracking-tight">
+            Ready to decode your financial life?
+          </h2>
+          <p className="mx-auto mt-2 max-w-md text-white/85">
+            Two minutes to sign up. Zero data leaves your browser.
+          </p>
+          <Button asChild size="lg" variant="secondary" className="mt-6">
+            <Link to="/login">
+              Start your blueprint <ArrowRight className="size-4" />
+            </Link>
+          </Button>
+        </motion.section>
+      )}
     </div>
   )
 }

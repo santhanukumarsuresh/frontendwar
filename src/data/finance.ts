@@ -7,11 +7,11 @@ import type {
 } from '@/types/finance'
 
 /*
- * Realistic starter dataset for one user — Rani S., 32, a product manager in
- * Bengaluru. Amounts are in absolute rupees (₹). This seeds the editable
- * finance store (src/store/finance.ts) which is the live source of truth:
- * the blueprint renders it, the timeline derives from it, and the dashboard
- * aggregates it. Users can edit any node from the blueprint's side panel.
+ * Sample dataset for one user — Rani S., 32, a product manager in Bengaluru.
+ * Amounts are in absolute rupees. This seeds the editable finance store
+ * (src/store/finance.ts), which is the live source of truth: the blueprint
+ * renders it, the timeline derives from it and the dashboard aggregates it.
+ * Users change or remove entries from the profile page.
  */
 
 export const DEFAULT_PROFILE: SelfNode = {

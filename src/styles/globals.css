@@ -11,7 +11,7 @@
   ────────────────────────────────────────────────────────────────────────
   THEME TOKENS  (token-driven design system)
   ────────────────────────────────────────────────────────────────────────
-  Wealth DNA brand palette (premium FinTech):
+  Wealth DNA brand palette:
     primary  #4f46e5 (indigo)   violet #7c3aed   teal #14b8a6
     amber #f59e0b   emerald #10b981   error #dc2626
   Colors are declared once as CSS variables, then mapped into Tailwind via
@@ -257,7 +257,7 @@
 
 /*
   ────────────────────────────────────────────────────────────────────────
-  PREMIUM THEME SWITCH  (View Transitions API — circular reveal)
+  ANIMATED THEME SWITCH  (View Transitions API — circular reveal)
   ────────────────────────────────────────────────────────────────────────
   The new theme snapshot is clip-path–revealed in an expanding circle from the
   toggle position (animation driven in src/lib/theme-transition.ts). We disable

@@ -1,33 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Update the <loc> origins to your live deployment URL after deploying. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://example.com/</loc>
+    <loc>https://santhanukumarsuresh.github.io/frontendwar/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://example.com/dashboard</loc>
-    <changefreq>weekly</changefreq>
+    <loc>https://santhanukumarsuresh.github.io/frontendwar/login</loc>
+    <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://example.com/blueprint</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://example.com/timeline</loc>
+    <loc>https://santhanukumarsuresh.github.io/frontendwar/dashboard</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://example.com/my-data</loc>
+    <loc>https://santhanukumarsuresh.github.io/frontendwar/blueprint</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://santhanukumarsuresh.github.io/frontendwar/timeline</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://example.com/settings</loc>
+    <loc>https://santhanukumarsuresh.github.io/frontendwar/profile</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>

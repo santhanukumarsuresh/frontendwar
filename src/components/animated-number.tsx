@@ -2,8 +2,8 @@ import { useEffect, useRef } from 'react'
 import { animate, useInView } from 'framer-motion'
 
 /**
- * Counts a number up from 0 when it scrolls into view — the classic premium
- * dashboard touch. Renders the final value immediately under reduced motion.
+ * Counts a number up from 0 when it scrolls into view. Renders the final
+ * value immediately when the user prefers reduced motion.
  */
 export function AnimatedNumber({
   value,
