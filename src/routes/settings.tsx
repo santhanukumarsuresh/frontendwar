@@ -189,15 +189,15 @@ function SettingsPage() {
             <Database className="size-4 text-primary" /> Your data
           </CardTitle>
           <CardDescription>
-            Every figure lives only in this browser (LocalStorage) — nothing is sent anywhere. Edit
-            any number from the{' '}
+            Every figure lives only in this browser (LocalStorage) — nothing is sent anywhere.
+            Enter or edit your numbers on the{' '}
             <Link
-              to="/blueprint"
+              to="/my-data"
               className="font-medium text-primary underline-offset-4 hover:underline"
             >
-              blueprint
+              My Data
             </Link>{' '}
-            by clicking a node and using the pencil.
+            page.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex items-center justify-between gap-4">

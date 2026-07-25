@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BlueprintRouteImport } from './routes/blueprint'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as MyDataRouteImport } from './routes/my-data'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as TimelineRouteImport } from './routes/timeline'
 
@@ -30,6 +31,11 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MyDataRoute = MyDataRouteImport.update({
+  id: '/my-data',
+  path: '/my-data',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -45,6 +51,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/blueprint': typeof BlueprintRoute
   '/dashboard': typeof DashboardRoute
+  '/my-data': typeof MyDataRoute
   '/settings': typeof SettingsRoute
   '/timeline': typeof TimelineRoute
 }
@@ -52,6 +59,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/blueprint': typeof BlueprintRoute
   '/dashboard': typeof DashboardRoute
+  '/my-data': typeof MyDataRoute
   '/settings': typeof SettingsRoute
   '/timeline': typeof TimelineRoute
 }
@@ -60,21 +68,31 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/blueprint': typeof BlueprintRoute
   '/dashboard': typeof DashboardRoute
+  '/my-data': typeof MyDataRoute
   '/settings': typeof SettingsRoute
   '/timeline': typeof TimelineRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/blueprint' | '/dashboard' | '/settings' | '/timeline'
+  fullPaths:
+    '/' | '/blueprint' | '/dashboard' | '/my-data' | '/settings' | '/timeline'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/blueprint' | '/dashboard' | '/settings' | '/timeline'
-  id: '__root__' | '/' | '/blueprint' | '/dashboard' | '/settings' | '/timeline'
+  to: '/' | '/blueprint' | '/dashboard' | '/my-data' | '/settings' | '/timeline'
+  id:
+    | '__root__'
+    | '/'
+    | '/blueprint'
+    | '/dashboard'
+    | '/my-data'
+    | '/settings'
+    | '/timeline'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BlueprintRoute: typeof BlueprintRoute
   DashboardRoute: typeof DashboardRoute
+  MyDataRoute: typeof MyDataRoute
   SettingsRoute: typeof SettingsRoute
   TimelineRoute: typeof TimelineRoute
 }
@@ -102,6 +120,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/my-data': {
+      id: '/my-data'
+      path: '/my-data'
+      fullPath: '/my-data'
+      preLoaderRoute: typeof MyDataRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -123,6 +148,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BlueprintRoute: BlueprintRoute,
   DashboardRoute: DashboardRoute,
+  MyDataRoute: MyDataRoute,
   SettingsRoute: SettingsRoute,
   TimelineRoute: TimelineRoute,
 }

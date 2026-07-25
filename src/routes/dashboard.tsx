@@ -25,10 +25,18 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { CASH_FLOW, NET_WORTH_HISTORY, TRANSACTIONS } from '@/data/finance'
-import { computeTotals, deriveAllocation, getGoals, getSelf } from '@/lib/derive'
+import {
+  blendedXirr,
+  computeTotals,
+  deriveAllocation,
+  deriveCashFlow,
+  deriveNetWorthHistory,
+  deriveTransactions,
+  getGoals,
+  getSelf,
+} from '@/lib/derive'
 import { useFinanceStore } from '@/store/finance'
-import { clampPct, formatINR, formatINRCompact, formatPct } from '@/lib/format'
+import { clampPct, formatDisplayName, formatINR, formatINRCompact, formatPct } from '@/lib/format'
 import { AnimatedNumber } from '@/components/animated-number'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
@@ -76,12 +84,18 @@ function DashboardPage() {
   const goals = getGoals(nodes)
   const self = getSelf(nodes)
   const allocation = deriveAllocation(nodes)
+  const history = deriveNetWorthHistory(totals)
+  const cashFlow = deriveCashFlow(nodes, totals)
+  const transactions = deriveTransactions(nodes)
+  const xirr = blendedXirr(nodes)
 
-  const first = NET_WORTH_HISTORY[0]
-  const last = NET_WORTH_HISTORY[NET_WORTH_HISTORY.length - 1]
-  const prev = NET_WORTH_HISTORY[NET_WORTH_HISTORY.length - 2]
+  const first = history[0]
+  const last = history[history.length - 1]
+  const prev = history[history.length - 2]
   const yoyGrowth = ((last.netWorth - first.netWorth) / first.netWorth) * 100
   const momDelta = ((last.netWorth - prev.netWorth) / prev.netWorth) * 100
+  const debtDelta = ((last.liabilities - first.liabilities) / first.liabilities) * 100
+  const avgInvested = cashFlow.reduce((sum, p) => sum + p.invested, 0) / cashFlow.length
 
   const loans = nodes.filter((n): n is LoanNode => n.category === 'loan')
   const insurance = nodes.filter((n): n is InsuranceNode => n.category === 'insurance')
@@ -99,7 +113,7 @@ function DashboardPage() {
       label: 'Investments',
       value: totals.investments,
       format: formatINRCompact,
-      delta: 14.2,
+      delta: xirr,
       deltaLabel: 'blended XIRR',
       icon: TrendingUp,
     },
@@ -107,8 +121,8 @@ function DashboardPage() {
       label: 'Liabilities',
       value: totals.liabilities,
       format: formatINRCompact,
-      delta: -8.7,
-      deltaLabel: 'debt this year',
+      delta: debtDelta,
+      deltaLabel: 'debt in 24 months',
       invert: true,
       icon: Landmark,
     },
@@ -117,7 +131,7 @@ function DashboardPage() {
       value: totals.savingsRate,
       format: (v: number) => formatPct(v),
       delta: totals.monthlySip / 1000,
-      deltaLabel: `₹${Math.round(totals.monthlySip / 1000)}K SIP/mo`,
+      deltaLabel: `${formatINRCompact(totals.monthlySip)} SIP/mo`,
       plain: true,
       icon: PiggyBank,
     },
@@ -128,7 +142,7 @@ function DashboardPage() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
-            Welcome back, {self.name.split(' ')[0]}
+            Welcome back, {formatDisplayName(self.name)}
           </h1>
           <p className="text-muted-foreground">
             Your net worth grew {formatPct(yoyGrowth)} over the last 24 months. Here's the full
@@ -208,7 +222,7 @@ function DashboardPage() {
           </CardHeader>
           <CardContent className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={NET_WORTH_HISTORY} margin={{ left: 4, right: 8, top: 8 }}>
+              <AreaChart data={history} margin={{ left: 4, right: 8, top: 8 }}>
                 <defs>
                   <linearGradient id="gAssets" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.45} />
@@ -236,6 +250,9 @@ function DashboardPage() {
                   width={52}
                 />
                 <Tooltip contentStyle={TOOLTIP_STYLE} formatter={tooltipINR} />
+                {/* Recharts' own draw animation stutters against the route
+                    transition on code-split navigations — the card-level
+                    motion fade covers the entrance instead. */}
                 <Area
                   type="monotone"
                   dataKey="assets"
@@ -243,6 +260,7 @@ function DashboardPage() {
                   stroke="var(--chart-1)"
                   fill="url(#gAssets)"
                   strokeWidth={2}
+                  isAnimationActive={false}
                 />
                 <Area
                   type="monotone"
@@ -251,6 +269,7 @@ function DashboardPage() {
                   stroke="var(--chart-2)"
                   fill="url(#gNet)"
                   strokeWidth={2}
+                  isAnimationActive={false}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -275,6 +294,7 @@ function DashboardPage() {
                   innerRadius={52}
                   outerRadius={82}
                   paddingAngle={3}
+                  isAnimationActive={false}
                 >
                   {allocation.map((_, i) => (
                     <Cell key={i} fill={CHART[i % CHART.length]} stroke="var(--card)" />
@@ -294,13 +314,13 @@ function DashboardPage() {
           <CardHeader>
             <CardTitle>Cash flow</CardTitle>
             <CardDescription>
-              Income vs expenses vs investments — averaging{' '}
-              {formatINRCompact(totals.monthlySip + 10500)} invested per month
+              Income vs expenses vs investments — averaging {formatINRCompact(avgInvested)}{' '}
+              invested per month
             </CardDescription>
           </CardHeader>
           <CardContent className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={CASH_FLOW} margin={{ left: 4, right: 8, top: 8 }} barGap={3}>
+              <BarChart data={cashFlow} margin={{ left: 4, right: 8, top: 8 }} barGap={3}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis
                   dataKey="month"
@@ -318,9 +338,27 @@ function DashboardPage() {
                 />
                 <Tooltip contentStyle={TOOLTIP_STYLE} formatter={tooltipINR} cursor={{ fill: 'var(--muted)', opacity: 0.4 }} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey="income" name="Income" fill="var(--chart-2)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="expenses" name="Expenses" fill="var(--chart-4)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="invested" name="Invested" fill="var(--chart-1)" radius={[4, 4, 0, 0]} />
+                <Bar
+                  dataKey="income"
+                  name="Income"
+                  fill="var(--chart-2)"
+                  radius={[4, 4, 0, 0]}
+                  isAnimationActive={false}
+                />
+                <Bar
+                  dataKey="expenses"
+                  name="Expenses"
+                  fill="var(--chart-4)"
+                  radius={[4, 4, 0, 0]}
+                  isAnimationActive={false}
+                />
+                <Bar
+                  dataKey="invested"
+                  name="Invested"
+                  fill="var(--chart-1)"
+                  radius={[4, 4, 0, 0]}
+                  isAnimationActive={false}
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -453,7 +491,7 @@ function DashboardPage() {
             <CardDescription>July 2026</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col">
-            {TRANSACTIONS.map((tx, i) => (
+            {transactions.map((tx, i) => (
               <div
                 key={tx.id}
                 className={cn(

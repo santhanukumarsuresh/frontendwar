@@ -4,7 +4,6 @@ import type {
   FinNode,
   NetWorthPoint,
   SelfNode,
-  Transaction,
 } from '@/types/finance'
 
 /*
@@ -17,7 +16,7 @@ import type {
 
 export const DEFAULT_PROFILE: SelfNode = {
   id: 'you',
-  label: 'Rani',
+  label: 'Rani S.',
   category: 'self',
   description: 'The centre of the blueprint — every asset, liability and protection connects here.',
   name: 'Rani S.',
@@ -318,12 +317,5 @@ export const CASH_FLOW: CashFlowPoint[] = [
   { month: 'Jul 26', income: 196000, expenses: 96500, invested: 55500 },
 ]
 
-export const TRANSACTIONS: Transaction[] = [
-  { id: 't1', date: '25 Jul', label: 'Salary — Meridian Labs', category: 'Income', amount: 196000, direction: 'credit' },
-  { id: 't2', date: '10 Jul', label: 'SIP — Flexi-cap fund', category: 'Investment', amount: 25000, direction: 'debit' },
-  { id: 't3', date: '08 Jul', label: 'Home loan EMI', category: 'Loan', amount: 38900, direction: 'debit' },
-  { id: 't4', date: '08 Jul', label: 'Car loan EMI', category: 'Loan', amount: 15600, direction: 'debit' },
-  { id: 't5', date: '05 Jul', label: 'NPS Tier-1 contribution', category: 'Investment', amount: 5000, direction: 'debit' },
-  { id: 't6', date: '02 Jul', label: 'Gold ETF purchase', category: 'Investment', amount: 3000, direction: 'debit' },
-  { id: 't7', date: '01 Jul', label: 'Dividend — large-caps', category: 'Income', amount: 4150, direction: 'credit' },
-]
+/* Account activity is derived live from these nodes — see deriveTransactions
+   in src/lib/derive.ts. */

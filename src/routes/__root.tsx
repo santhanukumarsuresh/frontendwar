@@ -34,12 +34,13 @@ function RootLayout() {
 
       <Header />
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-        {/* Soft fade-up on every route change — keeps navigation feeling alive. */}
+        {/* Soft fade on every route change. Opacity only — a transform here
+            forces chart layers to re-rasterize mid-mount and reads as jank. */}
         <motion.div
           key={pathname}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, ease: 'easeOut' }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.25, ease: 'easeOut' }}
           className="h-full"
         >
           <Outlet />

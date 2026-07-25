@@ -1,5 +1,5 @@
-import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { Link } from '@tanstack/react-router'
 import { AlertTriangle, ArrowRight, CheckCircle2, Info, Pencil, X } from 'lucide-react'
 import { connectionsOf } from '@/lib/derive'
 import { clampPct, formatINR, formatINRCompact, formatPct } from '@/lib/format'
@@ -7,11 +7,9 @@ import { useBlueprintStore } from '@/store/blueprint'
 import { useFinanceStore } from '@/store/finance'
 import { CATEGORY_COLORS, CATEGORY_LABELS } from '@/components/blueprint/meta'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
-import type { EdgeRelation, FinNode, NodeCategory, SelfNode } from '@/types/finance'
+import type { EdgeRelation, FinNode, SelfNode } from '@/types/finance'
 
 interface Insight {
   tone: 'good' | 'warn' | 'info'
@@ -296,112 +294,6 @@ function NodeStats({ node }: { node: FinNode }) {
   }
 }
 
-/* ── Edit mode ───────────────────────────────────────────────────────── */
-
-type NumericField = { key: string; label: string }
-
-const EDIT_FIELDS: Record<NodeCategory, NumericField[]> = {
-  self: [
-    { key: 'age', label: 'Age' },
-    { key: 'monthlyIncome', label: 'Monthly income (₹)' },
-    { key: 'monthlyExpenses', label: 'Monthly expenses (₹)' },
-  ],
-  goal: [
-    { key: 'targetAmount', label: 'Target amount (₹)' },
-    { key: 'currentAmount', label: 'Saved so far (₹)' },
-    { key: 'monthlyAllocation', label: 'Monthly allocation (₹)' },
-    { key: 'targetYear', label: 'Target year' },
-  ],
-  investment: [
-    { key: 'currentValue', label: 'Current value (₹)' },
-    { key: 'investedAmount', label: 'Amount invested (₹)' },
-    { key: 'monthlyContribution', label: 'Monthly contribution (₹)' },
-  ],
-  loan: [
-    { key: 'outstanding', label: 'Outstanding (₹)' },
-    { key: 'emi', label: 'EMI (₹/month)' },
-    { key: 'interestRate', label: 'Interest rate (%)' },
-  ],
-  insurance: [
-    { key: 'cover', label: 'Cover amount (₹)' },
-    { key: 'annualPremium', label: 'Annual premium (₹)' },
-  ],
-  emergency: [
-    { key: 'currentAmount', label: 'Current corpus (₹)' },
-    { key: 'targetAmount', label: 'Target corpus (₹)' },
-  ],
-}
-
-/** Inline form that writes the user's own numbers into the finance store. */
-function EditForm({ node, onDone }: { node: FinNode; onDone: () => void }) {
-  const updateNode = useFinanceStore((s) => s.updateNode)
-  const fields = EDIT_FIELDS[node.category]
-  const [name, setName] = useState(node.category === 'self' ? node.name : '')
-  const [draft, setDraft] = useState<Record<string, string>>(() =>
-    Object.fromEntries(
-      fields.map((f) => [f.key, String((node as unknown as Record<string, number>)[f.key])]),
-    ),
-  )
-
-  function save() {
-    const patch: Record<string, number | string> = {}
-    for (const f of fields) {
-      const value = Number(draft[f.key])
-      if (Number.isFinite(value) && value >= 0) patch[f.key] = value
-    }
-    if (node.category === 'self' && name.trim()) {
-      patch.name = name.trim()
-      patch.label = name.trim().split(' ')[0]
-    }
-    updateNode(node.id, patch as Partial<FinNode>)
-    onDone()
-  }
-
-  return (
-    <motion.form
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col gap-3"
-      onSubmit={(e) => {
-        e.preventDefault()
-        save()
-      }}
-    >
-      {node.category === 'self' && (
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="edit-name">Your name</Label>
-          <Input id="edit-name" value={name} onChange={(e) => setName(e.target.value)} required />
-        </div>
-      )}
-      {fields.map((f) => (
-        <div key={f.key} className="flex flex-col gap-1.5">
-          <Label htmlFor={`edit-${f.key}`}>{f.label}</Label>
-          <Input
-            id={`edit-${f.key}`}
-            type="number"
-            inputMode="numeric"
-            min={0}
-            value={draft[f.key]}
-            onChange={(e) => setDraft((d) => ({ ...d, [f.key]: e.target.value }))}
-            required
-          />
-        </div>
-      ))}
-      <div className="mt-1 flex gap-2">
-        <Button type="submit" size="sm" className="flex-1">
-          Save changes
-        </Button>
-        <Button type="button" size="sm" variant="outline" onClick={onDone}>
-          Cancel
-        </Button>
-      </div>
-      <p className="text-xs text-muted-foreground">
-        Saved on this device only — your data never leaves the browser.
-      </p>
-    </motion.form>
-  )
-}
-
 const TONE_ICONS = {
   good: CheckCircle2,
   warn: AlertTriangle,
@@ -412,13 +304,12 @@ export function SidePanel() {
   const selectedId = useBlueprintStore((s) => s.selectedId)
   const select = useBlueprintStore((s) => s.select)
   const nodes = useFinanceStore((s) => s.nodes)
-  const [editing, setEditing] = useState(false)
 
   const node = selectedId ? nodes.find((n) => n.id === selectedId) : undefined
   const self = nodes.find((n): n is SelfNode => n.category === 'self')!
 
   return (
-    <AnimatePresence onExitComplete={() => setEditing(false)}>
+    <AnimatePresence>
       {node && (
         <motion.aside
           key={node.id}
@@ -443,14 +334,10 @@ export function SidePanel() {
               </div>
             </div>
             <div className="flex items-center">
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={editing ? 'Stop editing' : 'Edit your numbers'}
-                aria-pressed={editing}
-                onClick={() => setEditing((e) => !e)}
-              >
-                <Pencil className={cn('size-4', editing && 'text-primary')} />
+              <Button asChild variant="ghost" size="icon">
+                <Link to="/my-data" aria-label="Edit this in My Data" title="Edit in My Data">
+                  <Pencil className="size-4" />
+                </Link>
               </Button>
               <Button
                 variant="ghost"
@@ -466,68 +353,60 @@ export function SidePanel() {
           <p className="mt-2 text-sm text-muted-foreground">{node.description}</p>
 
           <div className="mt-4">
-            {editing ? (
-              <EditForm key={node.id} node={node} onDone={() => setEditing(false)} />
-            ) : (
-              <NodeStats node={node} />
-            )}
+            <NodeStats node={node} />
           </div>
 
-          {!editing && (
-            <>
-              <Separator className="my-4" />
+          <Separator className="my-4" />
 
-              <h3 className="text-sm font-semibold">Insights</h3>
-              <ul className="mt-2 space-y-2">
-                {insightsFor(node, self).map((insight, i) => {
-                  const Icon = TONE_ICONS[insight.tone]
-                  return (
-                    <motion.li
-                      key={i}
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.15 + i * 0.08 }}
-                      className="flex gap-2 rounded-lg border bg-background/60 p-2.5 text-sm"
-                    >
-                      <Icon
-                        className={cn(
-                          'mt-0.5 size-4 shrink-0',
-                          insight.tone === 'good' && 'text-emerald-500',
-                          insight.tone === 'warn' && 'text-amber-500',
-                          insight.tone === 'info' && 'text-primary',
-                        )}
-                      />
-                      <span>{insight.text}</span>
-                    </motion.li>
-                  )
-                })}
-              </ul>
+          <h3 className="text-sm font-semibold">Insights</h3>
+          <ul className="mt-2 space-y-2">
+            {insightsFor(node, self).map((insight, i) => {
+              const Icon = TONE_ICONS[insight.tone]
+              return (
+                <motion.li
+                  key={i}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15 + i * 0.08 }}
+                  className="flex gap-2 rounded-lg border bg-background/60 p-2.5 text-sm"
+                >
+                  <Icon
+                    className={cn(
+                      'mt-0.5 size-4 shrink-0',
+                      insight.tone === 'good' && 'text-emerald-500',
+                      insight.tone === 'warn' && 'text-amber-500',
+                      insight.tone === 'info' && 'text-primary',
+                    )}
+                  />
+                  <span>{insight.text}</span>
+                </motion.li>
+              )
+            })}
+          </ul>
 
-              <Separator className="my-4" />
+          <Separator className="my-4" />
 
-              <h3 className="text-sm font-semibold">Connected in your blueprint</h3>
-              <ul className="mt-2 space-y-1.5">
-                {connectionsOf(nodes, node.id).map(({ edge, other }) => (
-                  <li key={`${edge.source}-${edge.target}-${edge.relation}`}>
-                    <button
-                      onClick={() => select(other.id)}
-                      className="group flex w-full items-center gap-2.5 rounded-lg border bg-background/60 px-3 py-2 text-left text-sm transition-colors hover:border-primary/50 hover:bg-accent"
-                    >
-                      <span
-                        className="size-2.5 shrink-0 rounded-full"
-                        style={{ background: CATEGORY_COLORS[other.category] }}
-                      />
-                      <span className="flex-1 font-medium">{other.label}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {RELATION_LABELS[edge.relation]}
-                      </span>
-                      <ArrowRight className="size-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
+          <h3 className="text-sm font-semibold">Connected in your blueprint</h3>
+          <ul className="mt-2 space-y-1.5">
+            {connectionsOf(nodes, node.id).map(({ edge, other }) => (
+              <li key={`${edge.source}-${edge.target}-${edge.relation}`}>
+                <button
+                  onClick={() => select(other.id)}
+                  className="group flex w-full items-center gap-2.5 rounded-lg border bg-background/60 px-3 py-2 text-left text-sm transition-colors hover:border-primary/50 hover:bg-accent"
+                >
+                  <span
+                    className="size-2.5 shrink-0 rounded-full"
+                    style={{ background: CATEGORY_COLORS[other.category] }}
+                  />
+                  <span className="flex-1 font-medium">{other.label}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {RELATION_LABELS[edge.relation]}
+                  </span>
+                  <ArrowRight className="size-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                </button>
+              </li>
+            ))}
+          </ul>
         </motion.aside>
       )}
     </AnimatePresence>

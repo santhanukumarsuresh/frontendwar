@@ -211,6 +211,13 @@
   animation: edge-flow 1.6s linear infinite;
 }
 
+/* The blueprint canvas is translucent in-page; give it a solid surface when
+   the user toggles it to fullscreen. */
+[data-graph-shell]:fullscreen {
+  background: var(--background);
+  border-radius: 0;
+}
+
 /*
   ────────────────────────────────────────────────────────────────────────
   CUSTOM SCROLLBAR  (WebKit / Chromium)

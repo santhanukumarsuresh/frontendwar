@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as d3 from 'd3'
-import { Maximize, Minus, Plus } from 'lucide-react'
+import { Maximize, Minimize, Minus, Plus, RotateCcw } from 'lucide-react'
 import { EDGES } from '@/data/finance'
 import { formatINRCompact } from '@/lib/format'
 import { useBlueprintStore } from '@/store/blueprint'
@@ -180,10 +180,29 @@ export function NodeGraph() {
     d3.select(svg).transition().duration(220).call(zoomRef.current.scaleBy, factor)
   }
 
+  /** Back to the initial framing after any pan/zoom/drag exploration. */
   function resetView() {
     const svg = svgRef.current
     if (!svg || !zoomRef.current) return
     d3.select(svg).transition().duration(320).call(zoomRef.current.transform, d3.zoomIdentity)
+  }
+
+  /* Fullscreen toggle on the graph shell (the container the page provides). */
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(Boolean(document.fullscreenElement))
+    document.addEventListener('fullscreenchange', onChange)
+    return () => document.removeEventListener('fullscreenchange', onChange)
+  }, [])
+
+  function toggleFullscreen() {
+    const shell = svgRef.current?.closest('[data-graph-shell]') as HTMLElement | null
+    if (!shell) return
+    if (document.fullscreenElement) {
+      void document.exitFullscreen()
+    } else {
+      void shell.requestFullscreen?.()
+    }
   }
 
   /* Pointer coordinates → simulation space (through viewBox + zoom). */
@@ -251,7 +270,7 @@ export function NodeGraph() {
       viewBox="-460 -340 920 680"
       role="application"
       aria-label="Interactive financial node graph. Drag nodes, scroll to zoom, click a node for details."
-      className="size-full min-h-105 cursor-grab touch-none select-none active:cursor-grabbing"
+      className="size-full cursor-grab touch-none select-none active:cursor-grabbing"
       onPointerDown={() => select(null)}
     >
       <g transform={transform.toString()}>
@@ -388,11 +407,21 @@ export function NodeGraph() {
           <Minus className="size-4" />
         </button>
         <button
-          aria-label="Reset view"
+          aria-label="Reset view to initial position"
+          title="Reset view"
           onClick={resetView}
           className="grid size-9 place-items-center border-t text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
-          <Maximize className="size-4" />
+          <RotateCcw className="size-4" />
+        </button>
+        <button
+          aria-label={isFullscreen ? 'Exit fullscreen' : 'View fullscreen'}
+          title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+          aria-pressed={isFullscreen}
+          onClick={toggleFullscreen}
+          className="grid size-9 place-items-center border-t text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          {isFullscreen ? <Minimize className="size-4" /> : <Maximize className="size-4" />}
         </button>
       </div>
 

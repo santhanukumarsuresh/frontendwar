@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { DEFAULT_NODES } from '@/data/finance'
 import { GOAL_PLAN_BASELINES, getSelf } from '@/lib/derive'
+import { formatDisplayName } from '@/lib/format'
 import type { FinNode } from '@/types/finance'
 
 /**
@@ -20,6 +21,10 @@ interface FinanceState {
 function recompute(nodes: FinNode[]): FinNode[] {
   const self = getSelf(nodes)
   return nodes.map((n) => {
+    if (n.category === 'self') {
+      // The graph label follows the display convention: "Rani S.", "Arjun M."
+      return { ...n, label: formatDisplayName(n.name) }
+    }
     if (n.category === 'goal') {
       const baseline = GOAL_PLAN_BASELINES.get(n.id)
       if (baseline) {
