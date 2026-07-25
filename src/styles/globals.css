@@ -11,9 +11,9 @@
   ────────────────────────────────────────────────────────────────────────
   THEME TOKENS  (token-driven design system)
   ────────────────────────────────────────────────────────────────────────
-  Brand palette:
-    primary  #005396   secondary #f89e64   accent(teal) #11b9b4
-    gradient end #00a0dc   error #c20000   warning #ffd500
+  Wealth DNA brand palette (premium FinTech):
+    primary  #4f46e5 (indigo)   violet #7c3aed   teal #14b8a6
+    amber #f59e0b   emerald #10b981   error #dc2626
   Colors are declared once as CSS variables, then mapped into Tailwind via
   `@theme inline`, so every utility (bg-background, text-primary, …) reads the
   tokens and switching light/dark is just flipping `data-theme` on <html>.
@@ -33,75 +33,75 @@
   --popover-foreground: oklch(21% 0.006 285.885);
 
   /* Brand primary */
-  --primary: #005396;
+  --primary: #4f46e5;
   --primary-foreground: oklch(100% 0 0);
 
-  --secondary: oklch(97% 0.004 247);
+  --secondary: oklch(97% 0.006 286);
   --secondary-foreground: oklch(21% 0.006 285.885);
 
-  --muted: oklch(97% 0.004 247);
-  --muted-foreground: oklch(50% 0.012 252);
+  --muted: oklch(97% 0.006 286);
+  --muted-foreground: oklch(50% 0.016 285);
 
-  --accent: oklch(95% 0.021 235);
-  --accent-foreground: oklch(30% 0.05 250);
+  --accent: oklch(95% 0.024 285);
+  --accent-foreground: oklch(32% 0.09 277);
 
-  --destructive: #c20000;
+  --destructive: #dc2626;
   --destructive-foreground: oklch(100% 0 0);
 
-  --border: oklch(92% 0.005 247);
-  --input: oklch(92% 0.005 247);
-  --ring: #005396;
+  --border: oklch(92% 0.006 286);
+  --input: oklch(92% 0.006 286);
+  --ring: #4f46e5;
 
   /* Brand palette (constant across themes; for gradients & accents) */
-  --brand: #005396;
-  --brand-light: #00a0dc;
-  --brand-teal: #11b9b4;
-  --brand-orange: #f89e64;
-  --brand-yellow: #ffd500;
-  --brand-gradient: linear-gradient(120deg, #005396 0%, #00a0dc 100%);
+  --brand: #4f46e5;
+  --brand-light: #818cf8;
+  --brand-teal: #14b8a6;
+  --brand-orange: #f59e0b;
+  --brand-yellow: #fbbf24;
+  --brand-gradient: linear-gradient(120deg, #4f46e5 0%, #7c3aed 100%);
 
   /* Data-viz series (all on-brand) */
-  --chart-1: #005396;
-  --chart-2: #00a0dc;
-  --chart-3: #11b9b4;
-  --chart-4: #f89e64;
-  --chart-5: #c20000;
+  --chart-1: #4f46e5;
+  --chart-2: #14b8a6;
+  --chart-3: #8b5cf6;
+  --chart-4: #f59e0b;
+  --chart-5: #dc2626;
 }
 
 [data-theme='dark'] {
-  /* Surfaces — darker page, lifted card for dark mode */
-  --background: oklch(23.26% 0.014 253.1);
-  --foreground: oklch(97.8% 0.029 256.847);
-  --card: oklch(25.33% 0.016 252.42);
-  --card-foreground: oklch(97.8% 0.029 256.847);
-  --popover: oklch(25.33% 0.016 252.42);
-  --popover-foreground: oklch(97.8% 0.029 256.847);
+  /* Surfaces — deep indigo-tinted page, lifted card for dark mode */
+  --background: oklch(21.5% 0.024 282);
+  --foreground: oklch(97.5% 0.012 286);
+  --card: oklch(24% 0.027 282);
+  --card-foreground: oklch(97.5% 0.012 286);
+  --popover: oklch(24% 0.027 282);
+  --popover-foreground: oklch(97.5% 0.012 286);
 
-  /* Brand primary — lightened within the blue family for dark-mode contrast */
-  --primary: #1178c9;
-  --primary-foreground: oklch(100% 0 0);
+  /* Brand primary — lightened within the indigo family for dark-mode contrast */
+  --primary: #818cf8;
+  --primary-foreground: oklch(18% 0.04 282);
 
-  --secondary: oklch(30% 0.014 253);
-  --secondary-foreground: oklch(97.8% 0.029 256.847);
+  --secondary: oklch(29% 0.03 282);
+  --secondary-foreground: oklch(97.5% 0.012 286);
 
-  --muted: oklch(30% 0.014 253);
-  --muted-foreground: oklch(73% 0.02 256);
+  --muted: oklch(29% 0.03 282);
+  --muted-foreground: oklch(73% 0.024 284);
 
-  --accent: oklch(33% 0.032 245);
-  --accent-foreground: oklch(97.8% 0.029 256.847);
+  --accent: oklch(32% 0.05 280);
+  --accent-foreground: oklch(97.5% 0.012 286);
 
-  --destructive: #f0575c;
-  --destructive-foreground: oklch(100% 0 0);
+  --destructive: #f87171;
+  --destructive-foreground: oklch(18% 0.04 282);
 
   --border: oklch(100% 0 0 / 12%);
   --input: oklch(100% 0 0 / 16%);
-  --ring: #00a0dc;
+  --ring: #818cf8;
 
-  --chart-1: #2b8fd6;
-  --chart-2: #00a0dc;
-  --chart-3: #11b9b4;
-  --chart-4: #f89e64;
-  --chart-5: #f0575c;
+  --chart-1: #818cf8;
+  --chart-2: #2dd4bf;
+  --chart-3: #a78bfa;
+  --chart-4: #fbbf24;
+  --chart-5: #f87171;
 }
 
 @theme inline {
@@ -192,6 +192,23 @@
       scroll-behavior: auto !important;
     }
   }
+}
+
+/*
+  ────────────────────────────────────────────────────────────────────────
+  BLUEPRINT GRAPH  (animated "money flow" edges)
+  ────────────────────────────────────────────────────────────────────────
+  Funding edges in the node graph carry a slowly marching dash pattern to
+  suggest money flowing from investments toward goals. Disabled under
+  reduced motion via the global rule above.
+*/
+@keyframes edge-flow {
+  to {
+    stroke-dashoffset: -22;
+  }
+}
+.edge-flow {
+  animation: edge-flow 1.6s linear infinite;
 }
 
 /*

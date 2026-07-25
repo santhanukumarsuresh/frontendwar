@@ -1,17 +1,26 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
-import { ArrowRight, BarChart3, Boxes, Palette, Sparkles } from 'lucide-react'
+import {
+  ArrowRight,
+  LayoutDashboard,
+  Milestone,
+  ShieldCheck,
+  Sparkles,
+  Waypoints,
+} from 'lucide-react'
+import { GOALS, TOTALS } from '@/data/finance'
+import { formatINRCompact, formatPct } from '@/lib/format'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export const Route = createFileRoute('/')({
   head: () => ({
     meta: [
-      { title: 'Frontend Wars 2026 — Client-side React Starter' },
+      { title: 'Wealth DNA — Your Financial Life Blueprint' },
       {
         name: 'description',
         content:
-          'A compliant, deploy-ready React + TypeScript + Vite + Tailwind starter with token-driven theming, data viz, 3D and offline PWA support.',
+          'See your entire financial ecosystem — goals, investments, loans, insurance and emergency funds — as one interactive, living blueprint.',
       },
     ],
   }),
@@ -20,77 +29,168 @@ export const Route = createFileRoute('/')({
 
 const FEATURES = [
   {
-    icon: Palette,
-    title: 'Token-driven theming',
+    icon: Waypoints,
+    title: 'Interactive blueprint',
     description:
-      'Every color and radius is a CSS variable wired into Tailwind. Change the whole look from Settings — persisted to LocalStorage.',
-    to: '/settings',
+      'A living node graph of your financial DNA — drag, zoom and trace how every investment funds a goal and every policy protects one.',
+    to: '/blueprint',
   },
   {
-    icon: BarChart3,
-    title: 'Data visualization',
-    description: 'Recharts, Chart.js and D3 are ready to go, all reading the same theme tokens.',
+    icon: Milestone,
+    title: 'Milestone timeline',
+    description:
+      'Short, mid and long-term milestones on one timeline, each measured against where the plan says you should be today.',
+    to: '/timeline',
+  },
+  {
+    icon: LayoutDashboard,
+    title: 'Premium dashboard',
+    description:
+      'Net worth trend, cash flow, asset allocation, EMIs and protection cover — the complete picture at a glance.',
     to: '/dashboard',
   },
   {
-    icon: Boxes,
-    title: '3D & motion',
-    description: 'Three.js + React Three Fiber, Framer Motion, GSAP and Lenis are pre-wired.',
-    to: '/showcase',
+    icon: ShieldCheck,
+    title: 'Actionable insights',
+    description:
+      'Every node carries live, rule-based insights: step up this SIP, prepay that loan, top up this cover.',
+    to: '/blueprint',
   },
 ] as const
 
+/** Decorative miniature of the blueprint graph, drawn with pure SVG. */
+function HeroGraph() {
+  const satellites = [
+    { x: -150, y: -56, color: '#14b8a6', delay: 0 },
+    { x: -104, y: 72, color: '#14b8a6', delay: 0.4 },
+    { x: 148, y: -64, color: '#6366f1', delay: 0.8 },
+    { x: 158, y: 58, color: '#f59e0b', delay: 1.2 },
+    { x: 22, y: -104, color: '#a78bfa', delay: 1.6 },
+    { x: -18, y: 108, color: '#10b981', delay: 2.0 },
+  ]
+  return (
+    <svg viewBox="-220 -140 440 280" className="mx-auto w-full max-w-md" aria-hidden>
+      {satellites.map((s, i) => (
+        <line
+          key={i}
+          x1={0}
+          y1={0}
+          x2={s.x}
+          y2={s.y}
+          stroke={s.color}
+          strokeWidth={1.5}
+          strokeDasharray="5 5"
+          opacity={0.5}
+          className="edge-flow"
+        />
+      ))}
+      {satellites.map((s, i) => (
+        <g key={i}>
+          <circle cx={s.x} cy={s.y} r={16} fill={s.color} opacity={0.9}>
+            <animate
+              attributeName="r"
+              values="15;17;15"
+              dur="3s"
+              begin={`${s.delay}s`}
+              repeatCount="indefinite"
+            />
+          </circle>
+        </g>
+      ))}
+      <circle r={30} fill="var(--primary)" />
+      <text textAnchor="middle" dy="0.35em" fontSize={11} fontWeight={700} fill="#fff">
+        You
+      </text>
+    </svg>
+  )
+}
+
 function HomePage() {
+  const onTrack = GOALS.filter((g) => g.planProgress >= 75).length
+
+  const stats = [
+    { label: 'Net worth tracked', value: formatINRCompact(TOTALS.netWorth) },
+    { label: 'Goals on track', value: `${onTrack} of ${GOALS.length}` },
+    { label: 'Protection cover', value: formatINRCompact(TOTALS.insuranceCover) },
+    { label: 'Savings rate', value: formatPct(TOTALS.savingsRate) },
+  ]
+
   return (
     <div className="flex flex-col gap-16">
-      <section className="flex flex-col items-center gap-6 py-12 text-center">
-        <motion.span
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1 text-sm text-muted-foreground"
-        >
-          <Sparkles className="size-4 text-primary" />
-          React · TypeScript · Vite · Tailwind
-        </motion.span>
+      <section className="grid items-center gap-10 py-8 lg:grid-cols-2">
+        <div className="flex flex-col items-start gap-6">
+          <motion.span
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1 text-sm text-muted-foreground"
+          >
+            <Sparkles className="size-4 text-primary" />
+            Wealth DNA · Personal Finance SaaS
+          </motion.span>
 
-        <motion.h1
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="max-w-3xl text-balance text-4xl font-bold tracking-tight sm:text-6xl"
-        >
-          A compliant, deploy-ready starter for{' '}
-          <span className="text-primary">Frontend Wars 2026</span>
-        </motion.h1>
+          <motion.h1
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="max-w-xl text-balance text-4xl font-bold tracking-tight sm:text-6xl"
+          >
+            Your financial life, <span className="text-primary">decoded.</span>
+          </motion.h1>
 
-        <motion.p
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="max-w-2xl text-pretty text-lg text-muted-foreground"
-        >
-          100% client-side. No backend, no SSR, no databases — just a fast, themeable foundation
-          you can build your winning submission on.
-        </motion.p>
+          <motion.p
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="max-w-lg text-pretty text-lg text-muted-foreground"
+          >
+            Goals, investments, loans, insurance and your emergency fund — connected into one
+            interactive blueprint, so you can see exactly how today's money builds tomorrow's
+            life.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="flex flex-wrap items-center gap-3"
+          >
+            <Button asChild size="lg">
+              <Link to="/blueprint">
+                Explore your blueprint <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="outline">
+              <Link to="/dashboard">Open dashboard</Link>
+            </Button>
+          </motion.div>
+        </div>
 
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="flex flex-wrap items-center justify-center gap-3"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
         >
-          <Button asChild size="lg">
-            <Link to="/dashboard">
-              Explore the dashboard <ArrowRight className="size-4" />
-            </Link>
-          </Button>
-          <Button asChild size="lg" variant="outline">
-            <Link to="/settings">Customize theme</Link>
-          </Button>
+          <HeroGraph />
         </motion.div>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Stats strip */}
+      <motion.section
+        initial={{ opacity: 0, y: 16 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="grid grid-cols-2 gap-4 rounded-xl border bg-card/60 p-6 sm:grid-cols-4"
+        aria-label="Portfolio summary"
+      >
+        {stats.map(({ label, value }) => (
+          <div key={label} className="text-center">
+            <div className="text-2xl font-bold tabular-nums text-primary">{value}</div>
+            <div className="mt-1 text-sm text-muted-foreground">{label}</div>
+          </div>
+        ))}
+      </motion.section>
+
+      <section className="grid gap-4 sm:grid-cols-2">
         {FEATURES.map(({ icon: Icon, title, description, to }, i) => (
           <motion.div
             key={title}

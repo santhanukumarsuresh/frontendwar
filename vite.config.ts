@@ -26,15 +26,15 @@ export default defineConfig({
       injectRegister: 'auto',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'og-image.png', 'robots.txt'],
       manifest: {
-        name: 'Frontend Wars 2026',
-        short_name: 'FW 2026',
+        name: 'Wealth DNA — Financial Life Blueprint',
+        short_name: 'Wealth DNA',
         description:
-          'A fully client-side React + TypeScript + Vite + Tailwind app for Frontend Wars 2026.',
-        theme_color: '#005396',
-        background_color: '#0d1b2a',
+          'Your complete financial ecosystem — goals, investments, loans, insurance and emergency funds — as one interactive blueprint.',
+        theme_color: '#4f46e5',
+        background_color: '#16162b',
         display: 'standalone',
         orientation: 'portrait',
-        categories: ['productivity', 'developer'],
+        categories: ['finance', 'productivity'],
         // start_url / scope intentionally omitted — the plugin fills them from
         // Vite's `base`, so installs resolve correctly on subpath hosting.
         icons: [

@@ -1,144 +1,74 @@
-# Frontend Wars 2026 — Starter
+# Wealth DNA — Your Financial Life Blueprint
 
-A **100% client-side** React starter built to satisfy the Frontend Wars 2026 rulebook, with a
-token-driven theming system and one-command deploys to **GitHub Pages** _and_ **Vercel**.
+A modern, responsive **Personal Finance SaaS platform** that visualizes your complete financial
+ecosystem as one interactive blueprint. Goals, investments, insurance, loans and the emergency
+fund are connected in a living node graph, tracked on a milestone timeline, and summarized on a
+premium FinTech dashboard — 100% client-side, powered by realistic mock financial data.
 
-> No backend, no SSR, no databases, no external data APIs — everything runs in the browser.
+> Built for **Frontend Wars 2026 — Phase 1**, problem statement *"Wealth DNA – Financial Life
+> Blueprint"*.
 
----
+## ✨ Features
 
-## Tech stack
+| # | Mandatory feature | Where |
+|---|---|---|
+| 01 | **Interactive financial node graph** connecting goals, investments, loans & insurance — D3 force simulation with drag, pan/zoom and money-flow animations | `/blueprint` |
+| 02 | **Financial milestone timeline** with progress visualization across short / mid / long-term horizons | `/timeline` |
+| 03 | **Animated side panels** with detailed, rule-based financial insights per node | `/blueprint` (click any node) |
+| 04 | **Goal dependency & relationship visualization** — hover/select highlights every funding, protection and liability link | `/blueprint` |
+| 05 | **Responsive premium FinTech dashboard** with realistic mock datasets (net worth trend, cash flow, allocation, EMIs, cover) | `/dashboard` |
 
-| Layer          | Choice                                        | Rulebook status |
-| -------------- | --------------------------------------------- | --------------- |
-| Framework      | **React 19**                                  | ✅ Mandatory    |
-| Language       | **TypeScript**                                | ✅ Mandatory    |
-| Build tool     | **Vite**                                      | ✅ Mandatory    |
-| Styling        | **Tailwind CSS v4**                           | ✅ Mandatory    |
-| Routing        | TanStack **Router** (client-side, file-based) | Allowed         |
-| State          | Zustand                                       | Allowed         |
-| UI primitives  | shadcn/ui + Radix UI                          | Allowed         |
-| Motion         | Framer Motion · GSAP · Lenis                  | Allowed         |
-| 3D             | Three.js · React Three Fiber · drei           | Allowed         |
-| Data viz       | Recharts · Chart.js · D3                      | Allowed         |
-| Icons          | Lucide React                                  | Allowed         |
+Plus: light/dark theming with a circular-reveal transition (View Transitions API), accent
+customization, installable PWA with offline support, and reduced-motion accessibility support.
 
-> **Compliance note:** we use TanStack **Router** (a browser-only router), **not** TanStack
-> _Start_, because the rulebook forbids server-side rendering. All data lives in local mock JSON
-> and LocalStorage.
+## 🧬 How it's modelled
 
-## Features
+Everything renders from one typed graph in [`src/data/finance.ts`](src/data/finance.ts):
 
-- **Token-driven theme system.** Every color and radius is a CSS variable mapped into Tailwind's
-  `@theme`, using a cohesive brand palette (primary `#005396`, blue-light `#00a0dc`, teal `#11b9b4`,
-  coral `#f89e64`) and the **Montserrat** typeface (self-hosted via `@fontsource`). **Light and
-  dark** themes — defaulting to the system preference — plus a clickable **accent picker** and an
-  adjustable corner radius, editable from the **Settings** page and persisted to LocalStorage. See
-  [`src/styles/globals.css`](src/styles/globals.css), [`src/store/theme.ts`](src/store/theme.ts)
-  and [`src/components/theme-provider.tsx`](src/components/theme-provider.tsx).
-- **Premium theme-switch animation.** Toggling light/dark plays a full-page **circular reveal** from
-  the click point (View Transitions API) while the old theme cross-dissolves, with a reduced-motion
-  fallback. See [`src/lib/theme-transition.ts`](src/lib/theme-transition.ts).
-- **Data-viz dashboard** reading a local mock JSON file ([`src/data/metrics.json`](src/data/metrics.json)).
-- **3D showcase** rendered procedurally in-browser (no external asset CDN).
-- **Per-route code splitting** so the heavy 3D bundle only loads on `/showcase`.
-- **Installable PWA + offline support.** A Workbox service worker (via `vite-plugin-pwa`)
-  precaches the app shell and assets, so it installs to the home screen and **works fully
-  offline / locally** after the first visit. Web app manifest + maskable icons included.
-- **SEO (Lighthouse-100 ready).** Descriptive `<title>` + meta description, canonical URL,
-  Open Graph + Twitter card, JSON-LD structured data, `robots.txt`, `sitemap.xml`, and
-  **per-route titles/descriptions** managed by TanStack Router (`head` + `<HeadContent />`).
-- **Robustness:** router-level **404 (not-found)** page and an **error boundary** so a single
-  broken route degrades gracefully instead of white-screening.
-- **Accessibility:** keyboard-navigable controls, `prefers-reduced-motion` support, semantic landmarks.
+- **Nodes** — the user, 5 goals, 6 investments, 2 loans, 3 insurance policies and the emergency
+  fund (discriminated union in [`src/types/finance.ts`](src/types/finance.ts)).
+- **Edges** — typed relationships: `funds`, `protects`, `owes`, `plans`, `shields`.
+- The blueprint renders the graph, the timeline reads the goal nodes, and the dashboard
+  aggregates the same data — a single source of truth, no duplication.
 
-## Getting started
+Amounts use Indian conventions (₹, lakh/crore) via [`src/lib/format.ts`](src/lib/format.ts).
 
-Requires **Node 20+** and **pnpm**.
+## 🛠 Tech stack
+
+- **React 19 + TypeScript + Vite** — client-side only, no backend, no SSR
+- **TanStack Router** — file-based, code-split client routes
+- **Tailwind CSS v4** — token-driven design system (every color is a CSS variable)
+- **D3** (force simulation + zoom) — the blueprint graph
+- **Recharts** — dashboard charts
+- **Framer Motion** — side panels, progress bars, page transitions
+- **Zustand** — theme + blueprint UI state, persisted to LocalStorage
+- **vite-plugin-pwa** — installable, offline-first
+
+## 🚀 Getting started
 
 ```bash
 pnpm install
-pnpm dev          # http://localhost:5173
+pnpm dev        # start the dev server
+pnpm build      # typecheck + production build (dist/)
+pnpm preview    # preview the production build
+pnpm lint       # eslint
+pnpm typecheck  # tsc only
 ```
 
-Other scripts:
+Requires Node ≥ 20 and pnpm. Deploys as a static SPA (Vercel config and GitHub Pages
+`VITE_BASE` support included).
 
-```bash
-pnpm build        # typecheck + production build to dist/ (+ 404.html SPA fallback)
-pnpm preview      # preview the production build locally
-pnpm lint         # eslint
-pnpm format       # prettier
-```
-
-## Project structure
+## 📁 Structure
 
 ```
 src/
 ├── components/
+│   ├── blueprint/       # node-graph.tsx (D3 force graph), side-panel.tsx (animated insights)
 │   ├── layout/          # header, theme toggle
-│   ├── ui/              # shadcn/ui primitives (button, card, tabs, …)
-│   └── theme-provider.tsx
-├── data/               # local mock JSON (no network)
-├── lib/                # cn() helper
-├── routes/             # TanStack Router file-based routes
-│   ├── __root.tsx
-│   ├── index.tsx       # /
-│   ├── dashboard.tsx   # /dashboard
-│   ├── showcase.tsx    # /showcase
-│   └── settings.tsx    # /settings
-├── store/              # Zustand stores
-├── styles/globals.css  # Tailwind + design tokens
-└── main.tsx
+│   └── ui/              # button, card, slider, … (shadcn-style primitives)
+├── data/finance.ts      # the mock financial universe (nodes, edges, milestones, time series)
+├── lib/format.ts        # ₹ lakh/crore formatting
+├── routes/              # / (landing) · /dashboard · /blueprint · /timeline · /settings
+├── store/               # zustand: theme + blueprint selection/filters
+└── types/finance.ts     # domain model
 ```
-
-`src/routeTree.gen.ts` is generated by the TanStack Router Vite plugin and **committed** so CI
-type-checks without a pre-generation step.
-
-## Deployment
-
-### Vercel (recommended — zero config)
-
-1. Push the repo to GitHub.
-2. Import it in Vercel. Framework is auto-detected as Vite; [`vercel.json`](vercel.json) sets the
-   build command and the SPA rewrite.
-3. Deploy. `base` stays `/`, so nothing else is needed.
-
-### GitHub Pages (automated via Actions)
-
-1. Push to the `main` branch of a **public** repo.
-2. In the repo: **Settings → Pages → Build and deployment → Source = GitHub Actions**.
-3. The workflow at [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml) builds
-   with `VITE_BASE=/<repo-name>/` (filled in automatically) and publishes `dist/`.
-
-The app reads `base` from `VITE_BASE` in [`vite.config.ts`](vite.config.ts), the router uses
-`import.meta.env.BASE_URL` as its base path, and `dist/404.html` (a copy of `index.html`) makes
-deep-links work under the Pages subpath.
-
-## After deploying: set your real URL
-
-A few files ship with `https://example.com` placeholders. Replace the origin with your live
-deployment URL so SEO/social previews resolve correctly:
-
-- [`index.html`](index.html) — `<link rel="canonical">`
-- [`public/robots.txt`](public/robots.txt) — `Sitemap:` line
-- [`public/sitemap.xml`](public/sitemap.xml) — every `<loc>`
-
-`og:image` / `twitter:image` use a relative path and work as-is; make them absolute if you need
-rich previews on platforms that require it.
-
-### PWA notes
-
-- The service worker is **disabled in `pnpm dev`** (to avoid stale caches while coding) and
-  **enabled in the production build**. Test it with `pnpm build && pnpm preview`.
-- `registerType: 'autoUpdate'` — new deploys refresh the cache automatically on next load.
-
-## Rulebook compliance checklist
-
-- ✅ React + TypeScript + Vite + Tailwind (all mandatory techs)
-- ✅ Runs entirely in the browser — no backend, SSR, cloud, DB, or auth
-- ✅ Data via mock JSON + LocalStorage only
-- ✅ PWA/offline via a client-side service worker (no server)
-- ✅ Public GitHub repo + live deploy link + this README
-- ⚠️ Built as an **AI-assisted** scaffold. Per the rules, the final submission must not be
-  _substantially_ AI-generated, and you must be able to explain every part — treat this as your
-  starting foundation, then build and own the actual solution.

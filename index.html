@@ -5,19 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- Primary meta -->
-    <title>Frontend Wars 2026 — Client-side React Starter</title>
+    <title>Wealth DNA — Your Financial Life Blueprint</title>
     <meta
       name="description"
-      content="A fully client-side React + TypeScript + Vite + Tailwind app built for Frontend Wars 2026: token-driven theming, data visualization, 3D, PWA and offline support."
+      content="Wealth DNA connects your goals, investments, insurance, loans and emergency funds into one interactive blueprint — with a live node graph, milestone timeline and premium FinTech dashboard."
     />
     <meta
       name="keywords"
-      content="Frontend Wars 2026, React, TypeScript, Vite, Tailwind CSS, PWA, data visualization, Three.js"
+      content="Wealth DNA, personal finance, financial planning, net worth, financial goals, investments, insurance, node graph, milestone timeline, FinTech dashboard"
     />
-    <meta name="author" content="Frontend Wars 2026 participant" />
+    <meta name="author" content="Wealth DNA" />
     <meta name="robots" content="index, follow" />
     <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#005396" />
+    <meta name="theme-color" content="#4f46e5" />
 
     <!-- Icons (PWA manifest + apple-touch injected/served from /public) -->
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
@@ -28,11 +28,11 @@
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Frontend Wars 2026" />
-    <meta property="og:title" content="Frontend Wars 2026 — Client-side React Starter" />
+    <meta property="og:site_name" content="Wealth DNA" />
+    <meta property="og:title" content="Wealth DNA — Your Financial Life Blueprint" />
     <meta
       property="og:description"
-      content="Token-driven theming, data viz, 3D, PWA & offline — 100% client-side React + TypeScript + Vite + Tailwind."
+      content="See your entire financial ecosystem as one living, interactive blueprint — goals, investments, loans, insurance and emergency funds, connected."
     />
     <meta property="og:image" content="./og-image.png" />
     <meta property="og:image:width" content="1200" />
@@ -40,10 +40,10 @@
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Frontend Wars 2026 — Client-side React Starter" />
+    <meta name="twitter:title" content="Wealth DNA — Your Financial Life Blueprint" />
     <meta
       name="twitter:description"
-      content="Token-driven theming, data viz, 3D, PWA & offline — 100% client-side React + TypeScript + Vite + Tailwind."
+      content="See your entire financial ecosystem as one living, interactive blueprint — goals, investments, loans, insurance and emergency funds, connected."
     />
     <meta name="twitter:image" content="./og-image.png" />
 
@@ -52,11 +52,11 @@
       {
         "@context": "https://schema.org",
         "@type": "WebApplication",
-        "name": "Frontend Wars 2026",
-        "applicationCategory": "DeveloperApplication",
+        "name": "Wealth DNA",
+        "applicationCategory": "FinanceApplication",
         "operatingSystem": "Any (web browser)",
-        "description": "A fully client-side React + TypeScript + Vite + Tailwind app built for Frontend Wars 2026.",
-        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+        "description": "A personal finance platform that visualizes your complete financial ecosystem — goals, investments, insurance, loans and emergency funds — as an interactive blueprint.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" }
       }
     </script>
 
@@ -68,7 +68,7 @@
     <script>
       ;(function () {
         try {
-          var raw = localStorage.getItem('fw-theme')
+          var raw = localStorage.getItem('wealthdna-theme')
           var mode = raw ? JSON.parse(raw)?.state?.mode : 'system'
           if (mode === 'system' || !mode) {
             mode = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'

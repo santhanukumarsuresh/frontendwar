@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils'
 export const Route = createFileRoute('/settings')({
   head: () => ({
     meta: [
-      { title: 'Settings — Frontend Wars 2026' },
+      { title: 'Settings — Wealth DNA' },
       {
         name: 'description',
         content: 'Switch between light and dark themes and adjust the corner radius token.',
@@ -173,7 +173,7 @@ function SettingsPage() {
             <input
               id="custom-accent"
               type="color"
-              value={isHex(accent) ? accent! : '#005396'}
+              value={isHex(accent) ? accent! : '#4f46e5'}
               onChange={(e) => setAccent(e.target.value)}
               className="size-10 cursor-pointer rounded-md border bg-transparent"
             />

@@ -5,11 +5,11 @@ export const Route = createRootRoute({
   // Default document head; individual routes override the title/description.
   head: () => ({
     meta: [
-      { title: 'Frontend Wars 2026 — Client-side React Starter' },
+      { title: 'Wealth DNA — Your Financial Life Blueprint' },
       {
         name: 'description',
         content:
-          'A fully client-side React + TypeScript + Vite + Tailwind app for Frontend Wars 2026.',
+          'A personal finance platform that connects goals, investments, insurance, loans and emergency funds into one interactive blueprint.',
       },
     ],
   }),
@@ -34,8 +34,8 @@ function RootLayout() {
       </main>
       <footer className="border-t">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 text-sm text-muted-foreground sm:px-6 lg:px-8">
-          <span>Frontend Wars 2026 · 100% client-side</span>
-          <span>Code. Create. Conquer.</span>
+          <span>Wealth DNA · Your financial life, decoded</span>
+          <span>Plan · Visualize · Achieve</span>
         </div>
       </footer>
     </div>
