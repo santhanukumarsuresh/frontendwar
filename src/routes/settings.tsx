@@ -1,6 +1,7 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { Check, Moon, RotateCcw, Sun } from 'lucide-react'
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { Check, Database, Moon, RotateCcw, Sun } from 'lucide-react'
 import { ACCENT_SWATCHES, type ThemeMode, useThemeStore } from '@/store/theme'
+import { useFinanceStore } from '@/store/finance'
 import { runThemeTransition } from '@/lib/theme-transition'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -28,6 +29,7 @@ const MODES: { value: ThemeMode; label: string; icon: typeof Sun }[] = [
 
 function SettingsPage() {
   const { mode, accent, radius, setMode, setAccent, setRadius, reset } = useThemeStore()
+  const resetData = useFinanceStore((s) => s.resetData)
 
   function chooseMode(next: ThemeMode, e: React.MouseEvent) {
     if (next === mode) return
@@ -178,6 +180,33 @@ function SettingsPage() {
               className="size-10 cursor-pointer rounded-md border bg-transparent"
             />
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Database className="size-4 text-primary" /> Your data
+          </CardTitle>
+          <CardDescription>
+            Every figure lives only in this browser (LocalStorage) — nothing is sent anywhere. Edit
+            any number from the{' '}
+            <Link
+              to="/blueprint"
+              className="font-medium text-primary underline-offset-4 hover:underline"
+            >
+              blueprint
+            </Link>{' '}
+            by clicking a node and using the pencil.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex items-center justify-between gap-4">
+          <span className="text-sm text-muted-foreground">
+            Start over with the demo persona&rsquo;s numbers.
+          </span>
+          <Button variant="outline" size="sm" onClick={resetData}>
+            <RotateCcw className="size-4" /> Reset demo data
+          </Button>
         </CardContent>
       </Card>
     </div>

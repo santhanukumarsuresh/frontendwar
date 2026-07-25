@@ -25,17 +25,11 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import {
-  ALLOCATION,
-  CASH_FLOW,
-  GOALS,
-  NET_WORTH_HISTORY,
-  NODES,
-  PROFILE,
-  TOTALS,
-  TRANSACTIONS,
-} from '@/data/finance'
+import { CASH_FLOW, NET_WORTH_HISTORY, TRANSACTIONS } from '@/data/finance'
+import { computeTotals, deriveAllocation, getGoals, getSelf } from '@/lib/derive'
+import { useFinanceStore } from '@/store/finance'
 import { clampPct, formatINR, formatINRCompact, formatPct } from '@/lib/format'
+import { AnimatedNumber } from '@/components/animated-number'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import type { InsuranceNode, LoanNode } from '@/types/finance'
@@ -77,33 +71,42 @@ const tooltipINR = (v: number | string | ReadonlyArray<number | string> | undefi
   formatINRCompact(Number(Array.isArray(v) ? v[0] : (v ?? 0)))
 
 function DashboardPage() {
+  const nodes = useFinanceStore((s) => s.nodes)
+  const totals = computeTotals(nodes)
+  const goals = getGoals(nodes)
+  const self = getSelf(nodes)
+  const allocation = deriveAllocation(nodes)
+
   const first = NET_WORTH_HISTORY[0]
   const last = NET_WORTH_HISTORY[NET_WORTH_HISTORY.length - 1]
   const prev = NET_WORTH_HISTORY[NET_WORTH_HISTORY.length - 2]
   const yoyGrowth = ((last.netWorth - first.netWorth) / first.netWorth) * 100
   const momDelta = ((last.netWorth - prev.netWorth) / prev.netWorth) * 100
 
-  const loans = NODES.filter((n): n is LoanNode => n.category === 'loan')
-  const insurance = NODES.filter((n): n is InsuranceNode => n.category === 'insurance')
+  const loans = nodes.filter((n): n is LoanNode => n.category === 'loan')
+  const insurance = nodes.filter((n): n is InsuranceNode => n.category === 'insurance')
 
   const kpis = [
     {
       label: 'Net worth',
-      value: formatINRCompact(TOTALS.netWorth),
+      value: totals.netWorth,
+      format: formatINRCompact,
       delta: momDelta,
       deltaLabel: 'vs last month',
       icon: Wallet,
     },
     {
       label: 'Investments',
-      value: formatINRCompact(TOTALS.investments),
+      value: totals.investments,
+      format: formatINRCompact,
       delta: 14.2,
       deltaLabel: 'blended XIRR',
       icon: TrendingUp,
     },
     {
       label: 'Liabilities',
-      value: formatINRCompact(TOTALS.liabilities),
+      value: totals.liabilities,
+      format: formatINRCompact,
       delta: -8.7,
       deltaLabel: 'debt this year',
       invert: true,
@@ -111,9 +114,10 @@ function DashboardPage() {
     },
     {
       label: 'Savings rate',
-      value: formatPct(TOTALS.savingsRate),
-      delta: TOTALS.monthlySip / 1000,
-      deltaLabel: `₹${Math.round(TOTALS.monthlySip / 1000)}K SIP/mo`,
+      value: totals.savingsRate,
+      format: (v: number) => formatPct(v),
+      delta: totals.monthlySip / 1000,
+      deltaLabel: `₹${Math.round(totals.monthlySip / 1000)}K SIP/mo`,
       plain: true,
       icon: PiggyBank,
     },
@@ -124,7 +128,7 @@ function DashboardPage() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
-            Welcome back, {PROFILE.name.split(' ')[0]}
+            Welcome back, {self.name.split(' ')[0]}
           </h1>
           <p className="text-muted-foreground">
             Your net worth grew {formatPct(yoyGrowth)} over the last 24 months. Here's the full
@@ -141,7 +145,7 @@ function DashboardPage() {
 
       {/* KPI row */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {kpis.map(({ label, value, delta, deltaLabel, invert, plain, icon: Icon }, i) => {
+        {kpis.map(({ label, value, format, delta, deltaLabel, invert, plain, icon: Icon }, i) => {
           const positive = invert ? delta < 0 : delta >= 0
           return (
             <motion.div
@@ -150,7 +154,7 @@ function DashboardPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.06 }}
             >
-              <Card>
+              <Card className="transition-shadow hover:shadow-md">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <CardDescription>{label}</CardDescription>
@@ -158,7 +162,9 @@ function DashboardPage() {
                       <Icon className="size-4" />
                     </span>
                   </div>
-                  <CardTitle className="text-2xl tabular-nums">{value}</CardTitle>
+                  <CardTitle className="text-2xl tabular-nums">
+                    <AnimatedNumber value={value} format={format} />
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="flex items-center gap-1 text-sm font-medium">
                   {plain ? (
@@ -255,22 +261,22 @@ function DashboardPage() {
           <CardHeader>
             <CardTitle>Asset allocation</CardTitle>
             <CardDescription>
-              {formatINRCompact(TOTALS.investments + TOTALS.emergency + TOTALS.cash)} across 7
-              buckets
+              {formatINRCompact(allocation.reduce((sum, slice) => sum + slice.value, 0))} across{' '}
+              {allocation.length} buckets
             </CardDescription>
           </CardHeader>
           <CardContent className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={ALLOCATION}
+                  data={allocation}
                   dataKey="value"
                   nameKey="name"
                   innerRadius={52}
                   outerRadius={82}
                   paddingAngle={3}
                 >
-                  {ALLOCATION.map((_, i) => (
+                  {allocation.map((_, i) => (
                     <Cell key={i} fill={CHART[i % CHART.length]} stroke="var(--card)" />
                   ))}
                 </Pie>
@@ -289,7 +295,7 @@ function DashboardPage() {
             <CardTitle>Cash flow</CardTitle>
             <CardDescription>
               Income vs expenses vs investments — averaging{' '}
-              {formatINRCompact(TOTALS.monthlySip + 10500)} invested per month
+              {formatINRCompact(totals.monthlySip + 10500)} invested per month
             </CardDescription>
           </CardHeader>
           <CardContent className="h-72">
@@ -326,7 +332,7 @@ function DashboardPage() {
             <CardDescription>Against plan, as of today</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
-            {GOALS.map((goal) => (
+            {goals.map((goal) => (
               <div key={goal.id}>
                 <div className="mb-1 flex items-baseline justify-between gap-2 text-sm">
                   <span className="font-medium">{goal.label}</span>
@@ -375,7 +381,7 @@ function DashboardPage() {
           <CardHeader>
             <CardTitle>Loans</CardTitle>
             <CardDescription>
-              {formatINR(TOTALS.monthlyEmi)}/mo in EMIs · {formatINRCompact(TOTALS.liabilities)}{' '}
+              {formatINR(totals.monthlyEmi)}/mo in EMIs · {formatINRCompact(totals.liabilities)}{' '}
               outstanding
             </CardDescription>
           </CardHeader>
@@ -415,7 +421,7 @@ function DashboardPage() {
           <CardHeader>
             <CardTitle>Protection</CardTitle>
             <CardDescription>
-              {formatINRCompact(TOTALS.insuranceCover)} total cover
+              {formatINRCompact(totals.insuranceCover)} total cover
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">

@@ -11,7 +11,8 @@ import {
   ShieldCheck,
   Sunrise,
 } from 'lucide-react'
-import { MILESTONES } from '@/data/finance'
+import { deriveMilestones } from '@/lib/derive'
+import { useFinanceStore } from '@/store/finance'
 import { clampPct, formatINRCompact, formatPct } from '@/lib/format'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
@@ -40,11 +41,11 @@ const HORIZONS: { key: GoalHorizon; title: string; range: string }[] = [
 const MILESTONE_ICONS: Record<string, typeof Flag> = {
   'ms-emergency': ShieldCheck,
   'ms-car-loan': CircleDollarSign,
-  'ms-car': Car,
-  'ms-europe': Plane,
-  'ms-home': Home,
-  'ms-education': GraduationCap,
-  'ms-retirement': Sunrise,
+  'ms-goal-car': Car,
+  'ms-goal-europe': Plane,
+  'ms-goal-home': Home,
+  'ms-goal-education': GraduationCap,
+  'ms-goal-retirement': Sunrise,
 }
 
 const STATUS_META = {
@@ -140,14 +141,16 @@ function MilestoneCard({ milestone, index }: { milestone: Milestone; index: numb
 }
 
 function TimelinePage() {
-  const onTrack = MILESTONES.filter((m) => m.planProgress >= 75).length
+  const nodes = useFinanceStore((s) => s.nodes)
+  const milestones = deriveMilestones(nodes)
+  const onTrack = milestones.filter((m) => m.planProgress >= 75).length
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Milestone timeline</h1>
         <p className="mt-1 text-muted-foreground">
-          {onTrack} of {MILESTONES.length} milestones are at 75%+ of plan. Each one maps to a node
+          {onTrack} of {milestones.length} milestones are at 75%+ of plan. Each one maps to a node
           in the{' '}
           <Link to="/blueprint" className="font-medium text-primary underline-offset-4 hover:underline">
             blueprint
@@ -157,7 +160,7 @@ function TimelinePage() {
       </div>
 
       {HORIZONS.map(({ key, title, range }) => {
-        const items = MILESTONES.filter((m) => m.horizon === key)
+        const items = milestones.filter((m) => m.horizon === key)
         if (items.length === 0) return null
         return (
           <section key={key} aria-label={title}>
@@ -186,7 +189,12 @@ function TimelinePage() {
         className="rounded-xl border border-dashed p-5 text-center text-sm text-muted-foreground"
       >
         <CheckCircle2 className="mx-auto mb-2 size-5 text-emerald-500" />
-        The journey ends at financial independence in 2054 — a ₹6.5Cr corpus at age 60.
+        {(() => {
+          const retirement = nodes.find((n) => n.id === 'goal-retirement')
+          return retirement?.category === 'goal'
+            ? `The journey ends at financial independence in ${retirement.targetYear} — a ${formatINRCompact(retirement.targetAmount)} corpus at age 60.`
+            : 'The journey ends at financial independence.'
+        })()}
       </motion.div>
     </div>
   )

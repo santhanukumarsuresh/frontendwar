@@ -1,8 +1,10 @@
 import { Link } from '@tanstack/react-router'
-import { Dna, LayoutDashboard, Milestone, Settings, Waypoints } from 'lucide-react'
+import { Home, LayoutDashboard, Milestone, Settings, Waypoints } from 'lucide-react'
+import { Logo } from '@/components/logo'
 import { ThemeToggle } from './theme-toggle'
 
 const NAV = [
+  { to: '/', label: 'Home', icon: Home },
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/blueprint', label: 'Blueprint', icon: Waypoints },
   { to: '/timeline', label: 'Timeline', icon: Milestone },
@@ -13,10 +15,8 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <Link to="/" className="flex items-center gap-2 font-semibold">
-          <span className="grid size-8 place-items-center rounded-lg bg-(image:--brand-gradient) text-white">
-            <Dna className="size-4" />
-          </span>
+        <Link to="/" className="flex items-center gap-2 font-semibold" aria-label="Wealth DNA home">
+          <Logo className="size-8" />
           <span className="hidden sm:inline">
             Wealth <span className="text-primary">DNA</span>
           </span>
@@ -29,6 +29,7 @@ export function Header() {
               to={to}
               className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground [&.active]:bg-accent [&.active]:text-foreground"
               activeProps={{ className: 'active' }}
+              activeOptions={{ exact: to === '/' }}
             >
               <Icon className="size-4" />
               <span className="hidden md:inline">{label}</span>

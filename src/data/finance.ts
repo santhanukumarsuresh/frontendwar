@@ -1,36 +1,34 @@
 import type {
-  AllocationSlice,
   CashFlowPoint,
   FinEdge,
   FinNode,
-  GoalNode,
-  Milestone,
   NetWorthPoint,
   SelfNode,
   Transaction,
 } from '@/types/finance'
 
 /*
- * Realistic mock dataset for one user — Arjun Mehta, 32, a product manager in
- * Bengaluru. Amounts are in absolute rupees (₹). The graph below is the single
- * source of truth: the blueprint renders it directly, the timeline reads the
- * goal nodes, and the dashboard aggregates it.
+ * Realistic starter dataset for one user — Rani S., 32, a product manager in
+ * Bengaluru. Amounts are in absolute rupees (₹). This seeds the editable
+ * finance store (src/store/finance.ts) which is the live source of truth:
+ * the blueprint renders it, the timeline derives from it, and the dashboard
+ * aggregates it. Users can edit any node from the blueprint's side panel.
  */
 
-export const PROFILE: SelfNode = {
+export const DEFAULT_PROFILE: SelfNode = {
   id: 'you',
-  label: 'Arjun',
+  label: 'Rani',
   category: 'self',
   description: 'The centre of the blueprint — every asset, liability and protection connects here.',
-  name: 'Arjun Mehta',
+  name: 'Rani S.',
   age: 32,
   occupation: 'Product Manager, Bengaluru',
   monthlyIncome: 185000,
   monthlyExpenses: 96500,
 }
 
-export const NODES: FinNode[] = [
-  PROFILE,
+export const DEFAULT_NODES: FinNode[] = [
+  DEFAULT_PROFILE,
 
   /* ── Goals ─────────────────────────────────────────────────────────── */
   {
@@ -272,143 +270,13 @@ export const EDGES: FinEdge[] = [
   { source: 'emergency-fund', target: 'you', relation: 'shields' },
 ]
 
-/* ── Lookups & aggregates ────────────────────────────────────────────── */
+/* ── Assets outside the node graph ───────────────────────────────────── */
 
-const nodeIndex = new Map(NODES.map((n) => [n.id, n]))
-
-export function getNode(id: string): FinNode | undefined {
-  return nodeIndex.get(id)
-}
-
-/** Every edge touching a node, with the node on the other end resolved. */
-export function connectionsOf(id: string) {
-  return EDGES.filter((e) => e.source === id || e.target === id).map((edge) => ({
-    edge,
-    other: nodeIndex.get(edge.source === id ? edge.target : edge.source)!,
-  }))
-}
-
-export const GOALS = NODES.filter((n): n is GoalNode => n.category === 'goal')
-
-export const TOTALS = (() => {
-  let investments = 0
-  let liabilities = 0
-  let cover = 0
-  let sip = 0
-  let emi = 0
-  for (const n of NODES) {
-    if (n.category === 'investment') {
-      investments += n.currentValue
-      sip += n.monthlyContribution
-    } else if (n.category === 'loan') {
-      liabilities += n.outstanding
-      emi += n.emi
-    } else if (n.category === 'insurance') {
-      cover += n.cover
-    }
-  }
-  const emergency = 460000
-  const cash = 180000
-  const realEstate = 8200000
-  const assets = investments + emergency + cash + realEstate
-  return {
-    investments,
-    emergency,
-    cash,
-    realEstate,
-    assets,
-    liabilities,
-    netWorth: assets - liabilities,
-    insuranceCover: cover,
-    monthlySip: sip,
-    monthlyEmi: emi,
-    savingsRate: Math.round(
-      ((PROFILE.monthlyIncome - PROFILE.monthlyExpenses) / PROFILE.monthlyIncome) * 100,
-    ),
-  }
-})()
-
-/* ── Milestones (timeline) ───────────────────────────────────────────── */
-
-export const MILESTONES: Milestone[] = [
-  {
-    id: 'ms-emergency',
-    nodeId: 'emergency-fund',
-    title: '6-month emergency fund',
-    targetYear: 2026,
-    targetAmount: 600000,
-    currentAmount: 460000,
-    horizon: 'short',
-    planProgress: 77,
-    status: 'on-track',
-  },
-  {
-    id: 'ms-car-loan',
-    nodeId: 'loan-car',
-    title: 'Car loan closed',
-    targetYear: 2027,
-    targetAmount: 750000,
-    currentAmount: 460000,
-    horizon: 'short',
-    planProgress: 61,
-    status: 'on-track',
-  },
-  {
-    id: 'ms-car',
-    nodeId: 'goal-car',
-    title: 'EV crossover upgrade',
-    targetYear: 2027,
-    targetAmount: 900000,
-    currentAmount: 520000,
-    horizon: 'short',
-    planProgress: 82,
-    status: 'on-track',
-  },
-  {
-    id: 'ms-europe',
-    nodeId: 'goal-europe',
-    title: 'Europe with the family',
-    targetYear: 2028,
-    targetAmount: 450000,
-    currentAmount: 160000,
-    horizon: 'short',
-    planProgress: 64,
-    status: 'needs-attention',
-  },
-  {
-    id: 'ms-home',
-    nodeId: 'goal-home',
-    title: '3BHK down payment ready',
-    targetYear: 2031,
-    targetAmount: 4000000,
-    currentAmount: 740000,
-    horizon: 'mid',
-    planProgress: 58,
-    status: 'needs-attention',
-  },
-  {
-    id: 'ms-education',
-    nodeId: 'goal-education',
-    title: 'Aarav’s education corpus',
-    targetYear: 2040,
-    targetAmount: 12000000,
-    currentAmount: 890000,
-    horizon: 'long',
-    planProgress: 104,
-    status: 'on-track',
-  },
-  {
-    id: 'ms-retirement',
-    nodeId: 'goal-retirement',
-    title: 'Financial independence',
-    targetYear: 2054,
-    targetAmount: 65000000,
-    currentAmount: 2960000,
-    horizon: 'long',
-    planProgress: 111,
-    status: 'on-track',
-  },
-]
+/** Held assets that aren't blueprint nodes: bank balance and the 2BHK flat. */
+export const OTHER_ASSETS = {
+  cash: 180000,
+  realEstate: 8200000,
+} as const
 
 /* ── Time series ─────────────────────────────────────────────────────── */
 
@@ -448,16 +316,6 @@ export const CASH_FLOW: CashFlowPoint[] = [
   { month: 'May 26', income: 196000, expenses: 102300, invested: 55500 },
   { month: 'Jun 26', income: 196000, expenses: 93100, invested: 55500 },
   { month: 'Jul 26', income: 196000, expenses: 96500, invested: 55500 },
-]
-
-export const ALLOCATION: AllocationSlice[] = [
-  { name: 'Equity MF', value: 1860000 },
-  { name: 'Stocks', value: 740000 },
-  { name: 'PPF', value: 680000 },
-  { name: 'NPS', value: 420000 },
-  { name: 'FD', value: 350000 },
-  { name: 'Gold', value: 230000 },
-  { name: 'Cash & liquid', value: 640000 },
 ]
 
 export const TRANSACTIONS: Transaction[] = [

@@ -18,8 +18,11 @@ premium FinTech dashboard — 100% client-side, powered by realistic mock financ
 | 04 | **Goal dependency & relationship visualization** — hover/select highlights every funding, protection and liability link | `/blueprint` |
 | 05 | **Responsive premium FinTech dashboard** with realistic mock datasets (net worth trend, cash flow, allocation, EMIs, cover) | `/dashboard` |
 
-Plus: light/dark theming with a circular-reveal transition (View Transitions API), accent
-customization, installable PWA with offline support, and reduced-motion accessibility support.
+Plus: **bring your own data** — click any node in the blueprint and use the pencil to enter your
+real numbers (persisted to LocalStorage, never sent anywhere; reset from Settings), light/dark
+theming with a circular-reveal transition (View Transitions API), accent customization, animated
+count-up KPIs and page transitions, installable PWA with offline support, and reduced-motion
+accessibility support.
 
 ## 🧬 How it's modelled
 

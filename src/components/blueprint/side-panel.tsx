@@ -1,19 +1,17 @@
+import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import {
-  AlertTriangle,
-  ArrowRight,
-  CheckCircle2,
-  Info,
-  X,
-} from 'lucide-react'
-import { connectionsOf, getNode, PROFILE } from '@/data/finance'
+import { AlertTriangle, ArrowRight, CheckCircle2, Info, Pencil, X } from 'lucide-react'
+import { connectionsOf } from '@/lib/derive'
 import { clampPct, formatINR, formatINRCompact, formatPct } from '@/lib/format'
 import { useBlueprintStore } from '@/store/blueprint'
+import { useFinanceStore } from '@/store/finance'
 import { CATEGORY_COLORS, CATEGORY_LABELS } from '@/components/blueprint/meta'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
-import type { EdgeRelation, FinNode } from '@/types/finance'
+import type { EdgeRelation, FinNode, NodeCategory, SelfNode } from '@/types/finance'
 
 interface Insight {
   tone: 'good' | 'warn' | 'info'
@@ -29,7 +27,7 @@ const RELATION_LABELS: Record<EdgeRelation, string> = {
 }
 
 /** Rule-based insights, computed live from the node's numbers. */
-function insightsFor(node: FinNode): Insight[] {
+function insightsFor(node: FinNode, self: SelfNode): Insight[] {
   switch (node.category) {
     case 'goal': {
       const monthsLeft = Math.max(1, (node.targetYear - 2026) * 12 + 5)
@@ -121,7 +119,7 @@ function insightsFor(node: FinNode): Insight[] {
     }
     case 'insurance': {
       if (node.kind === 'life') {
-        const multiple = node.cover / (PROFILE.monthlyIncome * 12)
+        const multiple = node.cover / Math.max(1, self.monthlyIncome * 12)
         return [
           {
             tone: multiple >= 15 ? 'good' : 'warn',
@@ -158,7 +156,7 @@ function insightsFor(node: FinNode): Insight[] {
       return [
         {
           tone: 'good',
-          text: `Saving ${formatPct(((PROFILE.monthlyIncome - PROFILE.monthlyExpenses) / PROFILE.monthlyIncome) * 100)} of income — well above the 30% benchmark.`,
+          text: `Saving ${formatPct(((self.monthlyIncome - self.monthlyExpenses) / Math.max(1, self.monthlyIncome)) * 100)} of income — well above the 30% benchmark.`,
         },
         {
           tone: 'info',
@@ -203,7 +201,10 @@ function NodeStats({ node }: { node: FinNode }) {
             <Stat label="Target" value={formatINRCompact(node.targetAmount)} accent />
             <Stat label="Saved so far" value={formatINRCompact(node.currentAmount)} />
             <Stat label="Target year" value={String(node.targetYear)} />
-            <Stat label="Monthly allocation" value={`${formatINRCompact(node.monthlyAllocation)}/mo`} />
+            <Stat
+              label="Monthly allocation"
+              value={`${formatINRCompact(node.monthlyAllocation)}/mo`}
+            />
           </div>
           <div className="mt-3 space-y-1.5">
             <div className="flex justify-between text-xs text-muted-foreground">
@@ -222,7 +223,9 @@ function NodeStats({ node }: { node: FinNode }) {
           <Stat label="XIRR" value={formatPct(node.returnPct, 1)} />
           <Stat
             label="Contribution"
-            value={node.monthlyContribution ? `${formatINRCompact(node.monthlyContribution)}/mo` : '—'}
+            value={
+              node.monthlyContribution ? `${formatINRCompact(node.monthlyContribution)}/mo` : '—'
+            }
           />
         </div>
       )
@@ -285,12 +288,118 @@ function NodeStats({ node }: { node: FinNode }) {
       return (
         <div className="grid grid-cols-2 gap-2">
           <Stat label="Age" value={`${node.age} yrs`} />
-          <Stat label="Profession" value="Product Mgr" />
+          <Stat label="Profession" value={node.occupation.split(',')[0]} />
           <Stat label="Monthly income" value={formatINRCompact(node.monthlyIncome)} accent />
           <Stat label="Monthly expenses" value={formatINRCompact(node.monthlyExpenses)} />
         </div>
       )
   }
+}
+
+/* ── Edit mode ───────────────────────────────────────────────────────── */
+
+type NumericField = { key: string; label: string }
+
+const EDIT_FIELDS: Record<NodeCategory, NumericField[]> = {
+  self: [
+    { key: 'age', label: 'Age' },
+    { key: 'monthlyIncome', label: 'Monthly income (₹)' },
+    { key: 'monthlyExpenses', label: 'Monthly expenses (₹)' },
+  ],
+  goal: [
+    { key: 'targetAmount', label: 'Target amount (₹)' },
+    { key: 'currentAmount', label: 'Saved so far (₹)' },
+    { key: 'monthlyAllocation', label: 'Monthly allocation (₹)' },
+    { key: 'targetYear', label: 'Target year' },
+  ],
+  investment: [
+    { key: 'currentValue', label: 'Current value (₹)' },
+    { key: 'investedAmount', label: 'Amount invested (₹)' },
+    { key: 'monthlyContribution', label: 'Monthly contribution (₹)' },
+  ],
+  loan: [
+    { key: 'outstanding', label: 'Outstanding (₹)' },
+    { key: 'emi', label: 'EMI (₹/month)' },
+    { key: 'interestRate', label: 'Interest rate (%)' },
+  ],
+  insurance: [
+    { key: 'cover', label: 'Cover amount (₹)' },
+    { key: 'annualPremium', label: 'Annual premium (₹)' },
+  ],
+  emergency: [
+    { key: 'currentAmount', label: 'Current corpus (₹)' },
+    { key: 'targetAmount', label: 'Target corpus (₹)' },
+  ],
+}
+
+/** Inline form that writes the user's own numbers into the finance store. */
+function EditForm({ node, onDone }: { node: FinNode; onDone: () => void }) {
+  const updateNode = useFinanceStore((s) => s.updateNode)
+  const fields = EDIT_FIELDS[node.category]
+  const [name, setName] = useState(node.category === 'self' ? node.name : '')
+  const [draft, setDraft] = useState<Record<string, string>>(() =>
+    Object.fromEntries(
+      fields.map((f) => [f.key, String((node as unknown as Record<string, number>)[f.key])]),
+    ),
+  )
+
+  function save() {
+    const patch: Record<string, number | string> = {}
+    for (const f of fields) {
+      const value = Number(draft[f.key])
+      if (Number.isFinite(value) && value >= 0) patch[f.key] = value
+    }
+    if (node.category === 'self' && name.trim()) {
+      patch.name = name.trim()
+      patch.label = name.trim().split(' ')[0]
+    }
+    updateNode(node.id, patch as Partial<FinNode>)
+    onDone()
+  }
+
+  return (
+    <motion.form
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex flex-col gap-3"
+      onSubmit={(e) => {
+        e.preventDefault()
+        save()
+      }}
+    >
+      {node.category === 'self' && (
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="edit-name">Your name</Label>
+          <Input id="edit-name" value={name} onChange={(e) => setName(e.target.value)} required />
+        </div>
+      )}
+      {fields.map((f) => (
+        <div key={f.key} className="flex flex-col gap-1.5">
+          <Label htmlFor={`edit-${f.key}`}>{f.label}</Label>
+          <Input
+            id={`edit-${f.key}`}
+            type="number"
+            inputMode="numeric"
+            min={0}
+            value={draft[f.key]}
+            onChange={(e) => setDraft((d) => ({ ...d, [f.key]: e.target.value }))}
+            required
+          />
+        </div>
+      ))}
+      <div className="mt-1 flex gap-2">
+        <Button type="submit" size="sm" className="flex-1">
+          Save changes
+        </Button>
+        <Button type="button" size="sm" variant="outline" onClick={onDone}>
+          Cancel
+        </Button>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Saved on this device only — your data never leaves the browser.
+      </p>
+    </motion.form>
+  )
 }
 
 const TONE_ICONS = {
@@ -302,10 +411,14 @@ const TONE_ICONS = {
 export function SidePanel() {
   const selectedId = useBlueprintStore((s) => s.selectedId)
   const select = useBlueprintStore((s) => s.select)
-  const node = selectedId ? getNode(selectedId) : undefined
+  const nodes = useFinanceStore((s) => s.nodes)
+  const [editing, setEditing] = useState(false)
+
+  const node = selectedId ? nodes.find((n) => n.id === selectedId) : undefined
+  const self = nodes.find((n): n is SelfNode => n.category === 'self')!
 
   return (
-    <AnimatePresence>
+    <AnimatePresence onExitComplete={() => setEditing(false)}>
       {node && (
         <motion.aside
           key={node.id}
@@ -329,68 +442,92 @@ export function SidePanel() {
                 <h2 className="text-lg font-bold leading-tight">{node.label}</h2>
               </div>
             </div>
-            <Button variant="ghost" size="icon" aria-label="Close panel" onClick={() => select(null)}>
-              <X className="size-4" />
-            </Button>
+            <div className="flex items-center">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={editing ? 'Stop editing' : 'Edit your numbers'}
+                aria-pressed={editing}
+                onClick={() => setEditing((e) => !e)}
+              >
+                <Pencil className={cn('size-4', editing && 'text-primary')} />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Close panel"
+                onClick={() => select(null)}
+              >
+                <X className="size-4" />
+              </Button>
+            </div>
           </div>
 
           <p className="mt-2 text-sm text-muted-foreground">{node.description}</p>
 
           <div className="mt-4">
-            <NodeStats node={node} />
+            {editing ? (
+              <EditForm key={node.id} node={node} onDone={() => setEditing(false)} />
+            ) : (
+              <NodeStats node={node} />
+            )}
           </div>
 
-          <Separator className="my-4" />
+          {!editing && (
+            <>
+              <Separator className="my-4" />
 
-          <h3 className="text-sm font-semibold">Insights</h3>
-          <ul className="mt-2 space-y-2">
-            {insightsFor(node).map((insight, i) => {
-              const Icon = TONE_ICONS[insight.tone]
-              return (
-                <motion.li
-                  key={i}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.15 + i * 0.08 }}
-                  className="flex gap-2 rounded-lg border bg-background/60 p-2.5 text-sm"
-                >
-                  <Icon
-                    className={cn(
-                      'mt-0.5 size-4 shrink-0',
-                      insight.tone === 'good' && 'text-emerald-500',
-                      insight.tone === 'warn' && 'text-amber-500',
-                      insight.tone === 'info' && 'text-primary',
-                    )}
-                  />
-                  <span>{insight.text}</span>
-                </motion.li>
-              )
-            })}
-          </ul>
+              <h3 className="text-sm font-semibold">Insights</h3>
+              <ul className="mt-2 space-y-2">
+                {insightsFor(node, self).map((insight, i) => {
+                  const Icon = TONE_ICONS[insight.tone]
+                  return (
+                    <motion.li
+                      key={i}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.15 + i * 0.08 }}
+                      className="flex gap-2 rounded-lg border bg-background/60 p-2.5 text-sm"
+                    >
+                      <Icon
+                        className={cn(
+                          'mt-0.5 size-4 shrink-0',
+                          insight.tone === 'good' && 'text-emerald-500',
+                          insight.tone === 'warn' && 'text-amber-500',
+                          insight.tone === 'info' && 'text-primary',
+                        )}
+                      />
+                      <span>{insight.text}</span>
+                    </motion.li>
+                  )
+                })}
+              </ul>
 
-          <Separator className="my-4" />
+              <Separator className="my-4" />
 
-          <h3 className="text-sm font-semibold">Connected in your blueprint</h3>
-          <ul className="mt-2 space-y-1.5">
-            {connectionsOf(node.id).map(({ edge, other }) => (
-              <li key={`${edge.source}-${edge.target}-${edge.relation}`}>
-                <button
-                  onClick={() => select(other.id)}
-                  className="group flex w-full items-center gap-2.5 rounded-lg border bg-background/60 px-3 py-2 text-left text-sm transition-colors hover:border-primary/50 hover:bg-accent"
-                >
-                  <span
-                    className="size-2.5 shrink-0 rounded-full"
-                    style={{ background: CATEGORY_COLORS[other.category] }}
-                  />
-                  <span className="flex-1 font-medium">{other.label}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {RELATION_LABELS[edge.relation]}
-                  </span>
-                  <ArrowRight className="size-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-                </button>
-              </li>
-            ))}
-          </ul>
+              <h3 className="text-sm font-semibold">Connected in your blueprint</h3>
+              <ul className="mt-2 space-y-1.5">
+                {connectionsOf(nodes, node.id).map(({ edge, other }) => (
+                  <li key={`${edge.source}-${edge.target}-${edge.relation}`}>
+                    <button
+                      onClick={() => select(other.id)}
+                      className="group flex w-full items-center gap-2.5 rounded-lg border bg-background/60 px-3 py-2 text-left text-sm transition-colors hover:border-primary/50 hover:bg-accent"
+                    >
+                      <span
+                        className="size-2.5 shrink-0 rounded-full"
+                        style={{ background: CATEGORY_COLORS[other.category] }}
+                      />
+                      <span className="flex-1 font-medium">{other.label}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {RELATION_LABELS[edge.relation]}
+                      </span>
+                      <ArrowRight className="size-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
         </motion.aside>
       )}
     </AnimatePresence>

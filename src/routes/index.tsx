@@ -8,8 +8,10 @@ import {
   Sparkles,
   Waypoints,
 } from 'lucide-react'
-import { GOALS, TOTALS } from '@/data/finance'
+import { computeTotals, getGoals } from '@/lib/derive'
+import { useFinanceStore } from '@/store/finance'
 import { formatINRCompact, formatPct } from '@/lib/format'
+import { AnimatedNumber } from '@/components/animated-number'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
@@ -106,14 +108,18 @@ function HeroGraph() {
 }
 
 function HomePage() {
-  const onTrack = GOALS.filter((g) => g.planProgress >= 75).length
+  const nodes = useFinanceStore((s) => s.nodes)
+  const totals = computeTotals(nodes)
+  const goals = getGoals(nodes)
+  const onTrack = goals.filter((g) => g.planProgress >= 75).length
 
-  const stats = [
-    { label: 'Net worth tracked', value: formatINRCompact(TOTALS.netWorth) },
-    { label: 'Goals on track', value: `${onTrack} of ${GOALS.length}` },
-    { label: 'Protection cover', value: formatINRCompact(TOTALS.insuranceCover) },
-    { label: 'Savings rate', value: formatPct(TOTALS.savingsRate) },
-  ]
+  const stats: { label: string; value?: number; format?: (v: number) => string; text?: string }[] =
+    [
+      { label: 'Net worth tracked', value: totals.netWorth, format: formatINRCompact },
+      { label: 'Goals on track', text: `${onTrack} of ${goals.length}` },
+      { label: 'Protection cover', value: totals.insuranceCover, format: formatINRCompact },
+      { label: 'Savings rate', value: totals.savingsRate, format: (v) => formatPct(v) },
+    ]
 
   return (
     <div className="flex flex-col gap-16">
@@ -134,7 +140,10 @@ function HomePage() {
             transition={{ delay: 0.05 }}
             className="max-w-xl text-balance text-4xl font-bold tracking-tight sm:text-6xl"
           >
-            Your financial life, <span className="text-primary">decoded.</span>
+            Your financial life,{' '}
+            <span className="bg-(image:--brand-gradient) bg-clip-text text-transparent">
+              decoded.
+            </span>
           </motion.h1>
 
           <motion.p
@@ -182,9 +191,11 @@ function HomePage() {
         className="grid grid-cols-2 gap-4 rounded-xl border bg-card/60 p-6 sm:grid-cols-4"
         aria-label="Portfolio summary"
       >
-        {stats.map(({ label, value }) => (
+        {stats.map(({ label, value, format, text }) => (
           <div key={label} className="text-center">
-            <div className="text-2xl font-bold tabular-nums text-primary">{value}</div>
+            <div className="text-2xl font-bold tabular-nums text-primary">
+              {value != null && format ? <AnimatedNumber value={value} format={format} /> : text}
+            </div>
             <div className="mt-1 text-sm text-muted-foreground">{label}</div>
           </div>
         ))}
@@ -200,7 +211,7 @@ function HomePage() {
             transition={{ delay: i * 0.05 }}
           >
             <Link to={to} className="group block h-full">
-              <Card className="h-full transition-colors group-hover:border-primary">
+              <Card className="h-full transition-all duration-300 group-hover:-translate-y-1 group-hover:border-primary group-hover:shadow-lg">
                 <CardHeader>
                   <span className="grid size-10 place-items-center rounded-lg bg-primary/10 text-primary">
                     <Icon className="size-5" />

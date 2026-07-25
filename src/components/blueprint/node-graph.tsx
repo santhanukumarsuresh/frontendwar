@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as d3 from 'd3'
-import { EDGES, NODES } from '@/data/finance'
+import { Maximize, Minus, Plus } from 'lucide-react'
+import { EDGES } from '@/data/finance'
 import { formatINRCompact } from '@/lib/format'
 import { useBlueprintStore } from '@/store/blueprint'
+import { useFinanceStore } from '@/store/finance'
 import { CATEGORY_COLORS } from '@/components/blueprint/meta'
 import type { EdgeRelation, FinNode } from '@/types/finance'
 
@@ -119,6 +121,7 @@ function buildSimulation(visible: FinNode[]) {
 export function NodeGraph() {
   const svgRef = useRef<SVGSVGElement>(null)
   const transformRef = useRef(d3.zoomIdentity)
+  const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null)
   const dragRef = useRef<{ node: SimNode; moved: boolean } | null>(null)
 
   const [transform, setTransform] = useState(d3.zoomIdentity)
@@ -131,9 +134,10 @@ export function NodeGraph() {
   const select = useBlueprintStore((s) => s.select)
   const hover = useBlueprintStore((s) => s.hover)
 
+  const allNodes = useFinanceStore((s) => s.nodes)
   const visible = useMemo(
-    () => NODES.filter((n) => !hiddenCategories.includes(n.category)),
-    [hiddenCategories],
+    () => allNodes.filter((n) => !hiddenCategories.includes(n.category)),
+    [allNodes, hiddenCategories],
   )
 
   const { sim, simNodes, simLinks } = useMemo(() => buildSimulation(visible), [visible])
@@ -162,10 +166,25 @@ export function NodeGraph() {
         setTransform(event.transform)
       })
     d3.select(svg).call(zoom).on('dblclick.zoom', null)
+    zoomRef.current = zoom
     return () => {
       d3.select(svg).on('.zoom', null)
+      zoomRef.current = null
     }
   }, [])
+
+  /* On-canvas view controls (also make pan/zoom obvious on touch devices). */
+  function zoomBy(factor: number) {
+    const svg = svgRef.current
+    if (!svg || !zoomRef.current) return
+    d3.select(svg).transition().duration(220).call(zoomRef.current.scaleBy, factor)
+  }
+
+  function resetView() {
+    const svg = svgRef.current
+    if (!svg || !zoomRef.current) return
+    d3.select(svg).transition().duration(320).call(zoomRef.current.transform, d3.zoomIdentity)
+  }
 
   /* Pointer coordinates → simulation space (through viewBox + zoom). */
   function simPoint(event: React.PointerEvent): [number, number] {
@@ -226,7 +245,8 @@ export function NodeGraph() {
   }, [activeId])
 
   return (
-    <svg
+    <>
+      <svg
       ref={svgRef}
       viewBox="-460 -340 920 680"
       role="application"
@@ -349,6 +369,63 @@ export function NodeGraph() {
           )
         })}
       </g>
-    </svg>
+      </svg>
+
+      {/* View controls */}
+      <div className="absolute left-3 top-3 z-10 flex flex-col overflow-hidden rounded-lg border bg-card/90 shadow-sm backdrop-blur">
+        <button
+          aria-label="Zoom in"
+          onClick={() => zoomBy(1.35)}
+          className="grid size-9 place-items-center text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          <Plus className="size-4" />
+        </button>
+        <button
+          aria-label="Zoom out"
+          onClick={() => zoomBy(1 / 1.35)}
+          className="grid size-9 place-items-center border-t text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          <Minus className="size-4" />
+        </button>
+        <button
+          aria-label="Reset view"
+          onClick={resetView}
+          className="grid size-9 place-items-center border-t text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          <Maximize className="size-4" />
+        </button>
+      </div>
+
+      {/* Relationship legend — makes the dependency lines self-explanatory */}
+      <div className="absolute bottom-3 left-3 z-10 hidden flex-col gap-1.5 rounded-lg border bg-card/90 p-3 backdrop-blur sm:flex">
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+          Relationships
+        </span>
+        {(
+          [
+            ['funds', 'Funds a goal'],
+            ['protects', 'Protects'],
+            ['owes', 'Liability'],
+            ['shields', 'Safety net'],
+          ] as const
+        ).map(([relation, label]) => (
+          <span key={relation} className="flex items-center gap-2 text-xs text-muted-foreground">
+            <svg width="26" height="4" aria-hidden>
+              <line
+                x1="1"
+                y1="2"
+                x2="25"
+                y2="2"
+                stroke={EDGE_STYLES[relation].stroke}
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeDasharray={EDGE_STYLES[relation].dash}
+              />
+            </svg>
+            {label}
+          </span>
+        ))}
+      </div>
+    </>
   )
 }

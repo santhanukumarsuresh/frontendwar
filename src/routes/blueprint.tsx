@@ -1,11 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
-import { MousePointerClick, Move, ZoomIn } from 'lucide-react'
+import { MousePointerClick, Pencil } from 'lucide-react'
 import { NodeGraph } from '@/components/blueprint/node-graph'
-import { CATEGORY_COLORS, CATEGORY_LABELS } from '@/components/blueprint/meta'
 import { SidePanel } from '@/components/blueprint/side-panel'
-import { NODES } from '@/data/finance'
+import { CATEGORY_COLORS, CATEGORY_LABELS } from '@/components/blueprint/meta'
 import { useBlueprintStore } from '@/store/blueprint'
+import { useFinanceStore } from '@/store/finance'
 import { cn } from '@/lib/utils'
 import type { NodeCategory } from '@/types/finance'
 
@@ -25,68 +25,62 @@ export const Route = createFileRoute('/blueprint')({
 
 const FILTERABLE: NodeCategory[] = ['goal', 'investment', 'loan', 'insurance', 'emergency']
 
-const HINTS = [
-  { icon: MousePointerClick, text: 'Click a node for insights' },
-  { icon: Move, text: 'Drag nodes to rearrange' },
-  { icon: ZoomIn, text: 'Scroll to zoom, drag canvas to pan' },
-] as const
-
 function BlueprintPage() {
   const hiddenCategories = useBlueprintStore((s) => s.hiddenCategories)
   const toggleCategory = useBlueprintStore((s) => s.toggleCategory)
+  const nodes = useFinanceStore((s) => s.nodes)
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    // Sized to the viewport (header + page padding + footer) so the whole
+    // blueprint is visible without scrolling.
+    <div className="flex h-[calc(100dvh-13rem)] min-h-105 flex-col gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Financial blueprint</h1>
-          <p className="text-muted-foreground">
-            Every goal, investment, loan and protection in one living graph. Hover to trace
-            dependencies; click to open the insight panel.
+          <h1 className="text-xl font-bold tracking-tight">Financial blueprint</h1>
+          <p className="hidden text-sm text-muted-foreground lg:flex lg:items-center lg:gap-3">
+            <span className="inline-flex items-center gap-1">
+              <MousePointerClick className="size-3.5" /> Click a node for insights
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <Pencil className="size-3.5" /> Use the pencil in the panel to enter your own numbers
+            </span>
           </p>
         </div>
-        <div className="hidden items-center gap-4 text-xs text-muted-foreground lg:flex">
-          {HINTS.map(({ icon: Icon, text }) => (
-            <span key={text} className="inline-flex items-center gap-1.5">
-              <Icon className="size-3.5" /> {text}
-            </span>
-          ))}
+
+        {/* Category filter chips (double as the node legend) */}
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Filter node categories">
+          {FILTERABLE.map((category) => {
+            const active = !hiddenCategories.includes(category)
+            const count = nodes.filter((n) => n.category === category).length
+            return (
+              <button
+                key={category}
+                onClick={() => toggleCategory(category)}
+                aria-pressed={active}
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-all',
+                  active
+                    ? 'border-transparent bg-card shadow-sm'
+                    : 'border-dashed text-muted-foreground opacity-60',
+                )}
+              >
+                <span
+                  className="size-2 rounded-full"
+                  style={{ background: CATEGORY_COLORS[category] }}
+                />
+                {CATEGORY_LABELS[category]}
+                <span className="text-muted-foreground">{count}</span>
+              </button>
+            )
+          })}
         </div>
       </div>
 
-      {/* Category filter chips (double as the legend) */}
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Filter node categories">
-        {FILTERABLE.map((category) => {
-          const active = !hiddenCategories.includes(category)
-          const count = NODES.filter((n) => n.category === category).length
-          return (
-            <button
-              key={category}
-              onClick={() => toggleCategory(category)}
-              aria-pressed={active}
-              className={cn(
-                'inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-all',
-                active
-                  ? 'border-transparent bg-card shadow-sm'
-                  : 'border-dashed text-muted-foreground opacity-60',
-              )}
-            >
-              <span
-                className="size-2.5 rounded-full"
-                style={{ background: CATEGORY_COLORS[category] }}
-              />
-              {CATEGORY_LABELS[category]}
-              <span className="text-xs text-muted-foreground">{count}</span>
-            </button>
-          )
-        })}
-      </div>
-
-      {/* Graph canvas + overlaid side panel */}
+      {/* Graph canvas + overlaid controls, legend and side panel */}
       <motion.div
         initial={{ opacity: 0, scale: 0.99 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative h-[calc(100dvh-19rem)] min-h-120 overflow-hidden rounded-xl border bg-card/50"
+        className="relative min-h-0 flex-1 overflow-hidden rounded-xl border bg-card/50"
       >
         <div
           aria-hidden
