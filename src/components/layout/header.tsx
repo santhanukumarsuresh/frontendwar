@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Home, LayoutDashboard, Milestone, Waypoints } from 'lucide-react'
+import { Home, LayoutDashboard, LogOut, Milestone, Waypoints } from 'lucide-react'
 import { Logo } from '@/components/logo'
 import { useAuthStore } from '@/store/auth'
 import { useFinanceStore } from '@/store/finance'
 import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 import { ThemeToggle } from './theme-toggle'
+import type { SelfNode } from '@/types/finance'
 
-// The profile is reached through the avatar on the right, not a nav item.
 const NAV = [
   { to: '/', label: 'Home', icon: Home },
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -24,10 +25,11 @@ function initialsOf(name: string): string {
 
 export function Header() {
   const [open, setOpen] = useState(false)
+  const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
-  const selfName = useFinanceStore(
-    (s) => s.nodes.find((n) => n.category === 'self')?.label ?? 'W',
-  )
+  const signOut = useAuthStore((s) => s.signOut)
+  const self = useFinanceStore((s) => s.nodes.find((n): n is SelfNode => n.category === 'self'))
+  const displayLabel = self?.label ?? 'W'
 
   // Close the drawer with Escape.
   useEffect(() => {
@@ -36,6 +38,12 @@ export function Header() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [open])
+
+  function handleSignOut() {
+    setOpen(false)
+    signOut()
+    void navigate({ to: '/' })
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur">
@@ -70,15 +78,17 @@ export function Header() {
 
           {user ? (
             <>
-              {/* Avatar → profile. Ring + scale on hover so it reads as a button. */}
+              {/* Avatar → profile. Desktop only: on mobile the account lives
+                  inside the drawer below, so this doesn't compete with the
+                  hamburger for a cramped bit of space. */}
               <Link
                 to="/profile"
                 aria-label="Your profile and data"
                 title="Profile"
                 activeProps={{ className: 'ring-primary' }}
-                className="grid size-8 shrink-0 place-items-center rounded-full bg-(image:--brand-gradient) text-xs font-bold text-white ring-2 ring-transparent ring-offset-2 ring-offset-background transition-all hover:scale-105 hover:ring-primary/60"
+                className="hidden size-8 shrink-0 place-items-center rounded-full bg-(image:--brand-gradient) text-xs font-bold text-white ring-2 ring-transparent ring-offset-2 ring-offset-background transition-all hover:scale-105 hover:ring-primary/60 md:grid"
               >
-                {initialsOf(selfName)}
+                {initialsOf(displayLabel)}
               </Link>
 
               {/* Animated hamburger — mobile only. z-60 keeps it clickable
@@ -136,28 +146,62 @@ export function Header() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', stiffness: 340, damping: 34 }}
-              className="fixed inset-y-0 right-0 z-50 flex w-72 flex-col gap-1 border-l bg-card p-5 pt-16 shadow-xl md:hidden"
+              className="fixed inset-y-0 right-0 z-50 flex w-72 flex-col border-l bg-card pt-16 shadow-xl md:hidden"
               aria-label="Mobile"
             >
-              {NAV.map(({ to, label, icon: Icon }, i) => (
-                <motion.div
-                  key={to}
-                  initial={{ opacity: 0, x: 16 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.05 + i * 0.04 }}
-                >
-                  <Link
-                    to={to}
-                    onClick={() => setOpen(false)}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground [&.active]:bg-accent [&.active]:text-foreground"
-                    activeProps={{ className: 'active' }}
-                    activeOptions={{ exact: to === '/' }}
+              {/* Account — the drawer's own entry point to the profile on
+                  mobile, since the avatar button is desktop-only up top. */}
+              <Link
+                to="/profile"
+                onClick={() => setOpen(false)}
+                className="mx-5 flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-accent"
+              >
+                <span className="grid size-10 shrink-0 place-items-center rounded-full bg-(image:--brand-gradient) text-sm font-bold text-white">
+                  {initialsOf(displayLabel)}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold">
+                    {self?.name ?? displayLabel}
+                  </span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {user.email}
+                  </span>
+                </span>
+              </Link>
+
+              <Separator className="my-3" />
+
+              <div className="flex flex-1 flex-col gap-1 px-5">
+                {NAV.map(({ to, label, icon: Icon }, i) => (
+                  <motion.div
+                    key={to}
+                    initial={{ opacity: 0, x: 16 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.05 + i * 0.04 }}
                   >
-                    <Icon className="size-4 shrink-0" />
-                    {label}
-                  </Link>
-                </motion.div>
-              ))}
+                    <Link
+                      to={to}
+                      onClick={() => setOpen(false)}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground [&.active]:bg-accent [&.active]:text-foreground"
+                      activeProps={{ className: 'active' }}
+                      activeOptions={{ exact: to === '/' }}
+                    >
+                      <Icon className="size-4 shrink-0" />
+                      {label}
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+
+              <Separator />
+
+              <button
+                onClick={handleSignOut}
+                className="mx-3 my-3 flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-destructive"
+              >
+                <LogOut className="size-4 shrink-0" />
+                Sign out
+              </button>
             </motion.nav>
           </>
         )}
