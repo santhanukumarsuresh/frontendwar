@@ -56,7 +56,11 @@ function RootLayout() {
             <Logo className="size-5" />
             <span>Wealth DNA · Your financial life, decoded</span>
           </Link>
-          <span>Plan · Visualize · Achieve</span>
+          {/* Hidden on phones: with the brand line, two spans in one row
+              wrap to a second line there, quietly making the footer taller
+              than every page's height math (blueprint's in particular)
+              accounts for. */}
+          <span className="hidden sm:inline">Plan · Visualize · Achieve</span>
         </div>
       </footer>
     </div>

@@ -153,7 +153,7 @@ export function Header() {
                     activeProps={{ className: 'active' }}
                     activeOptions={{ exact: to === '/' }}
                   >
-                    <Icon className="size-4.5" />
+                    <Icon className="size-4 shrink-0" />
                     {label}
                   </Link>
                 </motion.div>
