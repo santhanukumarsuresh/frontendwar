@@ -46,90 +46,104 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <Link to="/" className="flex items-center gap-2 font-semibold" aria-label="Wealth DNA home">
-          <Logo className="size-8" />
-          <span>
-            Wealth <span className="text-primary">DNA</span>
-          </span>
-        </Link>
+    // The drawer and its backdrop are rendered as siblings of <header>, not
+    // inside it. `backdrop-blur` on the header is a backdrop-filter, and a
+    // backdrop-filter creates a new containing block for `position: fixed`
+    // descendants — the same way `transform` or `filter` does. Nested inside
+    // <header>, the drawer would size itself to the header's own ~56px bar
+    // instead of the viewport, which is why its background only covered a
+    // strip at the top and everything below it showed the page underneath.
+    <>
+      <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+          <Link
+            to="/"
+            className="flex items-center gap-2 font-semibold"
+            aria-label="Wealth DNA home"
+          >
+            <Logo className="size-8" />
+            <span>
+              Wealth <span className="text-primary">DNA</span>
+            </span>
+          </Link>
 
-        {/* Desktop nav — app pages need an account */}
-        {user && (
-          <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
-            {NAV.map(({ to, label, icon: Icon }) => (
-              <Link
-                key={to}
-                to={to}
-                className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground [&.active]:bg-accent [&.active]:text-foreground"
-                activeProps={{ className: 'active' }}
-                activeOptions={{ exact: to === '/' }}
-              >
-                <Icon className="size-4" />
-                <span className="hidden lg:inline">{label}</span>
-              </Link>
-            ))}
-          </nav>
-        )}
+          {/* Desktop nav — app pages need an account */}
+          {user && (
+            <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
+              {NAV.map(({ to, label, icon: Icon }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground [&.active]:bg-accent [&.active]:text-foreground"
+                  activeProps={{ className: 'active' }}
+                  activeOptions={{ exact: to === '/' }}
+                >
+                  <Icon className="size-4" />
+                  <span className="hidden lg:inline">{label}</span>
+                </Link>
+              ))}
+            </nav>
+          )}
 
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
 
-          {user ? (
-            <>
-              {/* Avatar → profile. Desktop only: on mobile the account lives
+            {user ? (
+              <>
+                {/* Avatar → profile. Desktop only: on mobile the account lives
                   inside the drawer below, so this doesn't compete with the
                   hamburger for a cramped bit of space. */}
-              <Link
-                to="/profile"
-                aria-label="Your profile and data"
-                title="Profile"
-                activeProps={{ className: 'ring-primary' }}
-                className="hidden size-8 shrink-0 place-items-center rounded-full bg-(image:--brand-gradient) text-xs font-bold text-white ring-2 ring-transparent ring-offset-2 ring-offset-background transition-all hover:scale-105 hover:ring-primary/60 md:grid"
-              >
-                {initialsOf(displayLabel)}
-              </Link>
+                <Link
+                  to="/profile"
+                  aria-label="Your profile and data"
+                  title="Profile"
+                  activeProps={{ className: 'ring-primary' }}
+                  className="hidden size-8 shrink-0 place-items-center rounded-full bg-(image:--brand-gradient) text-xs font-bold text-white ring-2 ring-transparent ring-offset-2 ring-offset-background transition-all hover:scale-105 hover:ring-primary/60 md:grid"
+                >
+                  {initialsOf(displayLabel)}
+                </Link>
 
-              {/* Animated hamburger — mobile only. z-60 keeps it clickable
+                {/* Animated hamburger — mobile only. z-60 keeps it clickable
                   above the open drawer, so it morphs into the closing X. */}
-              <button
-                className="relative z-60 grid size-9 place-items-center rounded-md text-foreground transition-colors hover:bg-accent md:hidden"
-                aria-label={open ? 'Close menu' : 'Open menu'}
-                aria-expanded={open}
-                onClick={() => setOpen((o) => !o)}
-              >
-                <span className="relative block h-3.5 w-5">
-                  <span
-                    className={cn(
-                      'absolute left-0 top-0 block h-0.5 w-5 rounded-full bg-current transition-all duration-300',
-                      open && 'top-1.5 rotate-45',
-                    )}
-                  />
-                  <span
-                    className={cn(
-                      'absolute left-0 top-1.5 block h-0.5 w-5 rounded-full bg-current transition-all duration-300',
-                      open && 'opacity-0',
-                    )}
-                  />
-                  <span
-                    className={cn(
-                      'absolute left-0 top-3 block h-0.5 w-5 rounded-full bg-current transition-all duration-300',
-                      open && 'top-1.5 -rotate-45',
-                    )}
-                  />
-                </span>
-              </button>
-            </>
-          ) : (
-            <Button asChild size="sm">
-              <Link to="/login">Sign in</Link>
-            </Button>
-          )}
+                <button
+                  className="relative z-60 grid size-9 place-items-center rounded-md text-foreground transition-colors hover:bg-accent md:hidden"
+                  aria-label={open ? 'Close menu' : 'Open menu'}
+                  aria-expanded={open}
+                  onClick={() => setOpen((o) => !o)}
+                >
+                  <span className="relative block h-3.5 w-5">
+                    <span
+                      className={cn(
+                        'absolute top-0 left-0 block h-0.5 w-5 rounded-full bg-current transition-all duration-300',
+                        open && 'top-1.5 rotate-45',
+                      )}
+                    />
+                    <span
+                      className={cn(
+                        'absolute top-1.5 left-0 block h-0.5 w-5 rounded-full bg-current transition-all duration-300',
+                        open && 'opacity-0',
+                      )}
+                    />
+                    <span
+                      className={cn(
+                        'absolute top-3 left-0 block h-0.5 w-5 rounded-full bg-current transition-all duration-300',
+                        open && 'top-1.5 -rotate-45',
+                      )}
+                    />
+                  </span>
+                </button>
+              </>
+            ) : (
+              <Button asChild size="sm">
+                <Link to="/login">Sign in</Link>
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
+      </header>
 
-      {/* Mobile drawer */}
+      {/* Mobile drawer, and its dimming backdrop — deliberately outside
+          <header> (see the comment above the return). */}
       <AnimatePresence>
         {open && user && (
           <>
@@ -163,9 +177,7 @@ export function Header() {
                   <span className="block truncate text-sm font-semibold">
                     {self?.name ?? displayLabel}
                   </span>
-                  <span className="block truncate text-xs text-muted-foreground">
-                    {user.email}
-                  </span>
+                  <span className="block truncate text-xs text-muted-foreground">{user.email}</span>
                 </span>
               </Link>
 
@@ -206,6 +218,6 @@ export function Header() {
           </>
         )}
       </AnimatePresence>
-    </header>
+    </>
   )
 }
